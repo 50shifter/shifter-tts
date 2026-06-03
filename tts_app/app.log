@@ -1,0 +1,337 @@
+[22:48:12] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[23:25:24] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[14:05:25] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[14:11:12] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[14:19:29] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[14:19:29] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[14:19:43] Модель загружена успешно. Device: cuda
+[14:19:43] [TTS] Модель загружена успешно. Device: cuda
+[14:20:09] Запись отменена пользователем
+[14:31:34] Модель выгружена
+[14:31:34] [TTS] Модель выгружена
+[14:31:34] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[14:31:36] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[14:58:27] 💾 Сохранено: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_145827.wav (24.3s)
+[14:58:32] Запись с микрофона: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_145827.wav
+[15:03:55] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[15:03:55] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[15:04:01] Whisper загружен: medium на cuda
+[15:04:01] [Whisper] Whisper загружен: medium на cuda
+[15:04:01] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/gui/temp/recording_20260603_145827.wav | lang=auto
+[15:04:01] [Whisper] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/gui/temp/recording_20260603_145827.wav | lang=auto
+[15:04:01]   Язык: None, VAD: True
+[15:04:01] [Whisper]   Язык: None, VAD: True
+[15:04:03]   Авто-язык: ru
+[15:04:03] [Whisper]   Авто-язык: ru
+[15:04:12] Транскрипция завершена: 9 сегментов, длительность: 24.3s
+[15:04:12] [Whisper] Транскрипция завершена: 9 сегментов, длительность: 24.3s
+[15:04:12] Транскрипция: 9 сегментов
+[15:04:12] с каждым днём ночь холодеет
+к рассвету воздух уже обжигает лицо
+лёгким морозом
+полотнище, палатки чуть-чуть провисают
+и трава сидеет от первого утренника
+пора вставать
+на востоке уже наливается тихим светом
+зря уже виднеются огромные очертания Ив
+и уже мёркнут звёзды
+[15:04:22] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[15:04:22] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[15:04:28] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[15:04:30] VRAM освобождён. Освобождено: 0 MiB | Статус: 0/0 MiB | Температура: 54°C
+[15:04:41] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[15:04:41] Удалён временный файл: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_145827.wav
+[15:24:56] 💾 Сохранено: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_152456.wav (24.2s)
+[15:24:57] Запись с микрофона: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_152456.wav
+[15:25:11] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[15:25:11] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[15:25:16] Whisper загружен: medium на cuda
+[15:25:16] [Whisper] Whisper загружен: medium на cuda
+[15:25:16] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/gui/temp/recording_20260603_152456.wav | lang=ru
+[15:25:16] [Whisper] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/gui/temp/recording_20260603_152456.wav | lang=ru
+[15:25:16]   Язык: ru, VAD: True
+[15:25:16] [Whisper]   Язык: ru, VAD: True
+[15:25:18] Транскрипция завершена: 3 сегментов, длительность: 24.2s
+[15:25:18] [Whisper] Транскрипция завершена: 3 сегментов, длительность: 24.2s
+[15:25:18] Транскрипция: 3 сегментов
+[15:25:18] а надо было раньше а надо было раньше потому что так и запишем да пидорасики такие вот
+без видосиков да с макияжем только и у владика она была и есть что сказать спросил бы хоть у кого
+чё как я не дома было соренечку
+[15:25:55] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[15:25:55] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[15:26:11] Модель загружена успешно. Device: cuda
+[15:26:11] [TTS] Модель загружена успешно. Device: cuda
+[15:26:11] Генерация TTS: 'Настюха писюха первый день в доте блять...' | lang=russian
+[15:26:11] [TTS] Генерация TTS: 'Настюха писюха первый день в доте блять...' | lang=russian
+[15:26:46] Генерация завершена. Длительность: 2.88s | SR: 24000
+[15:26:46] [TTS] Генерация завершена. Длительность: 2.88s | SR: 24000
+[15:26:46] TTS синтез завершён: 2.88s @ 24000Hz
+[15:27:58] Сохранено: C:/Users/User/Desktop/Qwen3-TTS/tts_app/output/output.wav
+[15:27:58] [TTS] Сохранено: C:/Users/User/Desktop/Qwen3-TTS/tts_app/output/output.wav
+[15:27:59] Сохранено (WAV): C:/Users/User/Desktop/Qwen3-TTS/tts_app/output/output.wav
+[15:34:28] Модель выгружена
+[15:34:28] [TTS] Модель выгружена
+[15:34:28] Кэш очищен. Освобождено: 0 MiB | VRAM: 8/20 MiB
+[15:34:28] Удалён временный файл: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\temp\recording_20260603_152456.wav
+[20:47:16] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[20:47:18] VRAM освобождён. Освобождено: 0 MiB | Статус: 0/0 MiB | Температура: 41°C
+[21:02:42] Извлечение аудио из видео: Untitled.mp4
+[21:02:42] FFmpeg команда: C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin\ffmpeg.exe -y -i C:\Users\User\Desktop\Untitled.mp4 -vn...
+[21:03:17] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:03:35] Извлечение аудио из видео: Untitled.mp4
+[21:03:35] FFmpeg команда: C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin\ffmpeg.exe -y -i C:\Users\User\Desktop\Untitled.mp4 -vn...
+[21:04:32] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:04:44] Извлечение аудио из видео: Untitled.mp4
+[21:04:44] FFmpeg команда: C:\Users\User\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin\ffmpeg.exe -y -i C:\Users\User\Desktop\Untitled.mp4 -vn...
+[21:04:45] Длительность видео: 52.4s
+[21:04:45] Извлечено аудио: 52.4s → C:\Users\User\Desktop\Qwen3-TTS\tts_app\modules\temp\Untitled_audio.wav
+[21:05:40] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:05:40] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:05:45] Whisper загружен: medium на cuda
+[21:05:45] [Whisper] Whisper загружен: medium на cuda
+[21:05:45] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/modules/temp/Untitled_audio.wav | lang=auto
+[21:05:45] [Whisper] Транскрипция: C:/Users/User/Desktop/Qwen3-TTS/tts_app/modules/temp/Untitled_audio.wav | lang=auto
+[21:05:45]   Язык: None, VAD: True
+[21:05:45] [Whisper]   Язык: None, VAD: True
+[21:05:46]   Авто-язык: ru
+[21:05:46] [Whisper]   Авто-язык: ru
+[21:05:53] Транскрипция завершена: 19 сегментов, длительность: 52.4s
+[21:05:53] [Whisper] Транскрипция завершена: 19 сегментов, длительность: 52.4s
+[21:05:53] Транскрипция: 19 сегментов
+[21:05:53] Спасибо, хорошо, не знаю, просто, типа, нахуятина, ужас какой.
+Рошана, хотите? Не хотите, не надо
+Кто там опять нафидзел?
+Бля, мы хоть что-нибудь можем? Нет, сейчас тараску возьму, буду ебашить
+Что ты, мать его, не...
+И натыкайся
+Нет, нет, не мэйн, ну так, он для души мэйн
+Вич доктор, да-да
+Вонюнтикий такой
+Ты че тут забыл, этот лайн для крутых
+Нет, яйки ходят
+Яйки
+Рейки, яйки, че непонятно
+Придурок
+Не то своровало
+Вот сука
+Он своровал у меня бомбы
+Не надо.
+Ну-ху, он своровал, давайте Рубика док
+[21:06:25] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:06:26] VRAM освобождён. Освобождено: 0 MiB | Статус: 0/0 MiB | Температура: 39°C
+[21:06:41] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:06:41] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:06:57] Модель загружена успешно. Device: cuda
+[21:06:57] [TTS] Модель загружена успешно. Device: cuda
+[21:06:57] Генерация TTS: 'Владик, ты мой хозяин, я хочу тебя вылизать....' | lang=russian
+[21:06:57] [TTS] Генерация TTS: 'Владик, ты мой хозяин, я хочу тебя вылизать....' | lang=russian
+[21:06:57] Ошибка генерации TTS: Either `voice_clone_prompt` or `ref_audio` must be provided.
+[21:06:57] [TTS] Ошибка генерации TTS: Either `voice_clone_prompt` or `ref_audio` must be provided.
+[21:09:48] Модель выгружена
+[21:09:48] [TTS] Модель выгружена
+[21:09:48] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:09:49] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:09:50] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[21:14:34] Перетащен аудиофайл: Untitled_audio.wav
+[21:15:55] Перетащен аудиофайл для транскрипции: Untitled_audio.wav
+[21:16:09] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:16:09] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:16:11] Whisper загружен: medium на cuda
+[21:16:11] [Whisper] Whisper загружен: medium на cuda
+[21:16:11] Транскрипция: C:/Users/User/Desktop/Untitled_audio.wav | lang=ru
+[21:16:11] [Whisper] Транскрипция: C:/Users/User/Desktop/Untitled_audio.wav | lang=ru
+[21:16:11]   Язык: ru, VAD: True
+[21:16:11] [Whisper]   Язык: ru, VAD: True
+[21:16:18] Транскрипция завершена: 19 сегментов, длительность: 52.4s
+[21:16:18] [Whisper] Транскрипция завершена: 19 сегментов, длительность: 52.4s
+[21:16:18] Транскрипция: 19 сегментов
+[21:16:18] Спасибо, хорошо, не знаю, просто, типа, нахуятина, ужас какой.
+Рошана, хотите? Не хотите, не надо
+Кто там опять нафидзел?
+Бля, мы хоть что-нибудь можем? Нет, сейчас тараску возьму, буду ебашить
+Что ты, мать его, не...
+И натыкайся
+Нет, нет, не мэйн, ну так, он для души мэйн
+Вич доктор, да-да
+Вонюнтикий такой
+Ты че тут забыл, этот лайн для крутых
+Нет, яйки ходят
+Яйки
+Рейки, яйки, че непонятно
+Придурок
+Не то своровало
+Вот сука
+Он своровал у меня бомбы
+Не надо.
+Ну-ху, он своровал, давайте Рубика док
+[21:19:17] Перетащен аудиофайл для транскрипции: Dotawomen.mp3
+[21:19:19] Транскрипция: C:/Users/User/Desktop/Dotawomen.mp3 | lang=ru
+[21:19:19] [Whisper] Транскрипция: C:/Users/User/Desktop/Dotawomen.mp3 | lang=ru
+[21:19:19]   Язык: ru, VAD: True
+[21:19:19] [Whisper]   Язык: ru, VAD: True
+[21:19:25] Транскрипция завершена: 6 сегментов, длительность: 45.7s
+[21:19:25] [Whisper] Транскрипция завершена: 6 сегментов, длительность: 45.7s
+[21:19:25] Транскрипция: 6 сегментов
+[21:19:25] Спасибо, хорошо. Не знаю, просто, типа, смехуятина, ужас какой.
+Рошана, хотите? Не хотите, не надо. Кто там опять нафидел?
+Блин, мы хоть что-нибудь можем? Нет. Сейчас тараску возьму, буду ебашить. Что ты, мать его, не...
+Не натыкайся. Нет, нет, не Мэйн, ну так, он для души Мэйн. Вич Доктор. Да, да. Нет, в яйки ходят.
+В яйки. Ну, в яйки, в яйки, блин, что непонятно. Э, придурок, не то своровал. Вот сука! Он своровал у меня бомбы.
+Ну, ху, он своровал. Давайте Рубика докажем.
+[21:19:34] Перетащен аудиофайл: Dotawomen.mp3
+[21:20:39] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:20:39] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:20:42] Модель загружена успешно. Device: cuda
+[21:20:42] [TTS] Модель загружена успешно. Device: cuda
+[21:20:42] Генерация TTS: 'Владик, я тебя люблю, хочу тебя безумно, еби меня...' | lang=auto
+[21:20:42] [TTS] Генерация TTS: 'Владик, я тебя люблю, хочу тебя безумно, еби меня...' | lang=auto
+[21:21:44] Генерация завершена. Длительность: 3.44s | SR: 24000
+[21:21:44] [TTS] Генерация завершена. Длительность: 3.44s | SR: 24000
+[21:21:44] TTS синтез завершён: 3.44s @ 24000Hz
+[21:22:07] Сохранено: C:/Users/User/Desktop/output.wav
+[21:22:07] [TTS] Сохранено: C:/Users/User/Desktop/output.wav
+[21:22:08] Сохранено (WAV): C:/Users/User/Desktop/output.wav
+[21:22:25] Генерация TTS: 'Владик, я тебя люблю, хочу тебя безумно, трахни ме...' | lang=auto
+[21:22:25] [TTS] Генерация TTS: 'Владик, я тебя люблю, хочу тебя безумно, трахни ме...' | lang=auto
+[21:24:43] VRAM освобождён. Освобождено: 1064 MiB | Статус: 4250/4268 MiB | Температура: 54°C
+[21:24:47] Кэш очищен. Освобождено: 20 MiB | VRAM: 4251/4310 MiB
+[21:27:32] Модель выгружена
+[21:27:32] [TTS] Модель выгружена
+[21:27:32] Кэш очищен. Освобождено: 0 MiB | VRAM: 4048/4066 MiB
+[21:27:32] Генерация завершена. Длительность: 3.52s | SR: 24000
+[21:27:32] [TTS] Генерация завершена. Длительность: 3.52s | SR: 24000
+[21:27:32] TTS синтез завершён: 3.52s @ 24000Hz
+[21:42:09] Перетащен аудиофайл для транскрипции: audio_2026-06-03_21-41-48.ogg
+[21:42:25] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:42:25] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[21:42:27] Whisper загружен: medium на cuda
+[21:42:27] [Whisper] Whisper загружен: medium на cuda
+[21:42:27] Транскрипция: C:/Users/User/Desktop/audio_2026-06-03_21-41-48.ogg | lang=ru
+[21:42:27] [Whisper] Транскрипция: C:/Users/User/Desktop/audio_2026-06-03_21-41-48.ogg | lang=ru
+[21:42:27]   Язык: ru, VAD: False
+[21:42:27] [Whisper]   Язык: ru, VAD: False
+[21:42:39] Транскрипция завершена: 16 сегментов, длительность: 59.5s
+[21:42:39] [Whisper] Транскрипция завершена: 16 сегментов, длительность: 59.5s
+[21:42:39] Транскрипция: 16 сегментов
+[21:42:39] Не, когда прям совсем пидореска была, я там, что-то два раза в месяц могла обузиться, типа...
+Ну, когда она чуть-чуть подспала, это пидореска, типа...
+Там всё равно там, в полночь была короткая схема, короче.
+И я обузилась так, что просто съёбывала, говорила мне то инет, то, блядь, свет, то, блядь, срачка, то понос, то ещё что-то.
+И, типа, два дня в месяц примерно проёбывала.
+И, типа, я просто преподала на...
+Смену других чуваков для отработки.
+И ясен хуй.
+Потому что я отрабатывала, у нас было д
+[21:42:51] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[21:43:35] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:43:35] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[21:43:38] Модель загружена успешно. Device: cuda
+[21:43:38] [TTS] Модель загружена успешно. Device: cuda
+[21:43:38] Генерация TTS: 'Я Лерка, я пряник, я люблю когда на меня фапают, н...' | lang=russian
+[21:43:38] [TTS] Генерация TTS: 'Я Лерка, я пряник, я люблю когда на меня фапают, н...' | lang=russian
+[21:44:01] Генерация завершена. Длительность: 7.84s | SR: 24000
+[21:44:01] [TTS] Генерация завершена. Длительность: 7.84s | SR: 24000
+[21:44:01] TTS синтез завершён: 7.84s @ 24000Hz
+[21:44:01] Кэш очищен. Освобождено: 1262 MiB | VRAM: 4045/4134 MiB
+
+=== UNCAUGHT EXCEPTION ===
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\window.py", line 1249, in _on_tts_done
+    torch.cuda.empty_cache() if torch.cuda.is_available() else None
+                                ^^^^^
+NameError: name 'torch' is not defined
+
+[21:44:32] Сохранено: C:/Users/User/Desktop/Qwen3-TTS/output.wav
+[21:44:32] [TTS] Сохранено: C:/Users/User/Desktop/Qwen3-TTS/output.wav
+[21:44:35] Сохранено (WAV): C:/Users/User/Desktop/Qwen3-TTS/output.wav
+[21:45:21] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:21] [TTS] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:22] Сохранено (WAV): C:/Users/User/Desktop/output.wav
+[21:45:41] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:41] [TTS] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:44] Сохранено (WAV): C:/Users/User/Desktop/output.wav
+[21:45:51] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:51] [TTS] Сохранено: C:/Users/User/Desktop/output.wav
+[21:45:53] Сохранено (WAV): C:/Users/User/Desktop/output.wav
+[22:26:04] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:26:08] Перетащен аудиофайл для транскрипции: audio_2026-06-03_21-41-48.ogg
+[22:26:15] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[22:26:15] [Whisper] Загрузка Whisper: medium | device=cuda | compute_type=float16
+[22:26:17] Whisper загружен: medium на cuda
+[22:26:17] [Whisper] Whisper загружен: medium на cuda
+[22:26:17] Транскрипция: C:/Users/User/Desktop/audio_2026-06-03_21-41-48.ogg | lang=ru
+[22:26:17] [Whisper] Транскрипция: C:/Users/User/Desktop/audio_2026-06-03_21-41-48.ogg | lang=ru
+[22:26:17]   Язык: ru, VAD: False
+[22:26:17] [Whisper]   Язык: ru, VAD: False
+[22:26:28] Транскрипция завершена: 16 сегментов, длительность: 59.5s
+[22:26:28] [Whisper] Транскрипция завершена: 16 сегментов, длительность: 59.5s
+[22:26:28] Транскрипция: 16 сегментов
+[22:26:28] Не, когда прям совсем пидореска была, я там, что-то два раза в месяц могла обузиться, типа...
+Ну, когда она чуть-чуть подспала, это пидореска, типа...
+Там всё равно там, в полночь была короткая схема, короче.
+И я обузилась так, что просто съёбывала, говорила мне то инет, то, блядь, свет, то, блядь, срачка, то понос, то ещё что-то.
+И, типа, два дня в месяц примерно проёбывала.
+И, типа, я просто преподала на...
+Смену других чуваков для отработки.
+И ясен хуй.
+Потому что я отрабатывала, у нас было д
+[22:27:00] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[22:27:00] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[22:27:13] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:27:13] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:27:13] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:27:13] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:28:10] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:29:02] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:29:02] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:29:02] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:29:02] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:29:22] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:30:03] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:30:03] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:30:03] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:30:03] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\..\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:33:05] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:33:19] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:33:19] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:33:19] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:33:19] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:35:31] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:35:46] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:35:46] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:35:46] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:35:46] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:36:32] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:36:43] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:36:43] [TTS] Загрузка модели: C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:36:43] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:36:43] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\Qwen3-TTS\tts_app\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:36:47] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[22:38:33] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:38:37] Загрузка модели: C:\Users\User\Desktop\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:38:37] [TTS] Загрузка модели: C:\Users\User\Desktop\models\Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:38:37] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:38:37] [TTS] Ошибка загрузки модели: Repo id must use alphanumeric chars, '-', '_' or '.'. The name cannot start or end with '-' or '.' and the maximum length is 96: 'C:\Users\User\Desktop\models\Qwen3-TTS-12Hz-1.7B-Base'.
+[22:38:39] Кэш очищен. Освобождено: 0 MiB | VRAM: 0/0 MiB
+[22:41:21] Перетащен аудиофайл: audio_2026-06-03_21-41-48.ogg
+[22:41:34] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:41:34] [TTS] Загрузка модели: C:\Users\User/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base | device=cuda | dtype=float16
+[22:41:37] Модель загружена успешно. Device: cuda
+[22:41:37] [TTS] Модель загружена успешно. Device: cuda
+[22:41:37] Генерация TTS: 'Я такая вредная сучька, да. Но если будешь хорошим...' | lang=russian
+[22:41:37] [TTS] Генерация TTS: 'Я такая вредная сучька, да. Но если будешь хорошим...' | lang=russian
+[22:41:59] Генерация завершена. Длительность: 8.32s | SR: 24000
+[22:41:59] [TTS] Генерация завершена. Длительность: 8.32s | SR: 24000
+[22:41:59] TTS синтез завершён: 8.32s @ 24000Hz
+[22:41:59] Кэш очищен. Освобождено: 1242 MiB | VRAM: 4044/4170 MiB
+
+=== UNCAUGHT EXCEPTION ===
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\Qwen3-TTS\tts_app\gui\window.py", line 1278, in _on_tts_done
+    torch.cuda.empty_cache() if torch.cuda.is_available() else None
+                                ^^^^^
+NameError: name 'torch' is not defined
+
+[22:42:11] Сохранено: C:/Users/User/Desktop/output.mp3 (8.32s, MP3)
+[22:42:11] [TTS] Сохранено: C:/Users/User/Desktop/output.mp3 (8.32s, MP3)
+[22:42:12] Сохранено (MP3): C:/Users/User/Desktop/output.mp3
