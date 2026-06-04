@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QMessageBox, QPushButton, QProgressBar, QPlainTextEdit,
     QTabWidget, QTextEdit, QVBoxLayout, QWidget, QComboBox, QCheckBox,
     QGroupBox, QSlider, QSpinBox, QDoubleSpinBox, QFrame, QSplitter, QSizePolicy,
-    QDialog, QGridLayout, QSpacerItem, QHeaderView, QTableWidget,
+    QDialog, QGridLayout, QSpacerItem, QHeaderView, QTableWidget, QScrollArea,
 )
 
 from modules.tts_engine import TTSEngine
@@ -1937,125 +1937,188 @@ class MainWindow(QMainWindow):
             self._log("Whisper модель выгружена")
             self._set_status("Whisper модель выгружена", "#fbbf24")
 
+
+
     # ======================== Вкладка Калибровка голоса ========================
 
     def _setup_calibrate_tab(self):
-        """Create voice calibration tab."""
         tab = QWidget()
-        tab.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(10)
+        main_layout = QVBoxLayout(tab)
 
-        instr_text = "Calibration Guide:\n\n"
-        instr_text += "Add multiple .pt voice vectors (e.g. sad, happy, whisper)\n"
-        instr_text += "and adjust their weight. Result = blended custom voice.\n\n"
-        instr_text += "How it works:\n"
-        instr_text += "  1. Add .pt files of voices with different emotions\n"
-        instr_text += "  2. Set weight for each (1.0 = full, 0.5 = half)\n"
-        instr_text += "  3. Press Calibrate to get a mixed vector\n"
-        instr_text += "  4. Save as a new .pt file\n"
-        instr_text += "  5. Use it as a regular voice vector"
+        # Scroll area чтобы контент не наезжал друг на друга
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
+        scroll_contents = QWidget()
+        layout = QVBoxLayout(scroll_contents)
+        layout.setSpacing(12)
+        layout.setContentsMargins(12, 12, 12, 12)
+        scroll.setWidget(scroll_contents)
+
+        instr_text = (
+            "Руководство по калибровке:\n\n"
+            "Добавьте несколько .pt векторов голоса (грустный, весёлый, шёпот)\n"
+            "и настройте их вес. Результат = смешанный пользовательский голос.\n\n"
+            "Как это работает:\n"
+            "  1. Добавьте .pt файлы голосов с разными эмоциями\n"
+            "  2. Установите вес (1.0 = полный, 0.5 = половина)\n"
+            "  3. Нажмите «Калибровать» для получения смешанного вектора\n"
+            "  4. Сохраните как новый .pt файл\n"
+            "  5. Используйте его как обычный вектор голоса"
+        )
         instr_label = QLabel(instr_text)
-        instr_label.setStyleSheet("color: #e0e0e0; font-size: 12px; background-color: #0f3460; border-radius: 6px; padding: 10px;")
+        instr_label.setStyleSheet(
+            "color: #e0e0e0; font-size: 15px; font-weight: bold; "
+            "background-color: #0f3460; border-radius: 8px; padding: 15px;"
+        )
         instr_label.setWordWrap(True)
+        instr_label.setMinimumHeight(150)
+        instr_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse |
+            Qt.TextInteractionFlag.TextSelectableByKeyboard
+        )
         layout.addWidget(instr_label)
 
-        voices_group = QGroupBox("Voice Vectors")
+        voices_group = QGroupBox("Векторы голоса")
+        voices_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
         voices_layout = QVBoxLayout(voices_group)
+        voices_layout.setSpacing(8)
+        voices_layout.setContentsMargins(8, 8, 8, 8)
+
         self.calibrate_voices_list = QTableWidget()
         self.calibrate_voices_list.setColumnCount(4)
-        self.calibrate_voices_list.setHorizontalHeaderLabels([".pt File Path", "Weight", "Duration", ""])
+        self.calibrate_voices_list.setHorizontalHeaderLabels([".pt Файл", "Вес", "Длительность", ""])
         self.calibrate_voices_list.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.calibrate_voices_list.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
-        self.calibrate_voices_list.setColumnWidth(1, 100)
+        self.calibrate_voices_list.setColumnWidth(1, 120)
         self.calibrate_voices_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
-        self.calibrate_voices_list.setColumnWidth(2, 120)
+        self.calibrate_voices_list.setColumnWidth(2, 150)
+        self.calibrate_voices_list.setMinimumWidth(500)
         self.calibrate_voices_list.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
         self.calibrate_voices_list.setColumnWidth(3, 40)
+        self.calibrate_voices_list.horizontalHeader().setMinimumHeight(48)
+        self.calibrate_voices_list.horizontalHeader().setStyleSheet("QHeaderView::section { font-size: 14px; padding: 6px 12px; font-weight: bold; }")
         self.calibrate_voices_list.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.calibrate_voices_list.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.calibrate_voices_list.setMinimumHeight(200)
+        self.calibrate_voices_list.setMinimumHeight(220)
+        self.calibrate_voices_list.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.calibrate_voices_list.verticalHeader().setVisible(False)
+        self.calibrate_voices_list.verticalHeader().setDefaultSectionSize(36)
         voices_layout.addWidget(self.calibrate_voices_list)
 
-        btn_layout = QHBoxLayout()
-        btn_add_voice = QPushButton("Add .pt")
-        btn_add_voice.setToolTip("Select a .pt voice vector file from the file browser.")
-        btn_add_voice.clicked.connect(self._add_calibrate_voice)
-        btn_layout.addWidget(btn_add_voice)
-        self.btn_remove_voice = QPushButton("Remove")
-        self.btn_remove_voice.setToolTip("Remove the selected voice from the calibration list.")
-        self.btn_remove_voice.clicked.connect(self._remove_calibrate_voice)
-        self.btn_remove_voice.setStyleSheet("QPushButton { background-color: #3d3d5c; color: #e0e0e0; border-radius: 6px; } QPushButton:hover { background-color: #ef4444; color: white; }")
-        btn_layout.addWidget(self.btn_remove_voice)
-        btn_load_voice = QPushButton("Refresh")
-        btn_load_voice.setToolTip("Reload vector info (duration, size).")
-        btn_load_voice.clicked.connect(self._load_calibrate_voice_info)
-        btn_layout.addWidget(btn_load_voice)
-        btn_layout.addStretch()
-        voices_layout.addLayout(btn_layout)
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+
+        btn_add = QPushButton("Добавить .pt")
+        btn_add.setMinimumHeight(36)
+        btn_add.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_add.setToolTip("Выберите .pt файл вектора голоса.")
+        btn_add.clicked.connect(self._add_calibrate_voice)
+        btn_row.addWidget(btn_add)
+
+        self.btn_remove = QPushButton("Удалить")
+        self.btn_remove.setMinimumHeight(36)
+        self.btn_remove.setStyleSheet("QPushButton { background-color: #3d3d5c; color: #e0e0e0; font-size: 15px; padding: 6px 12px; border-radius: 6px; } QPushButton:hover { background-color: #ef4444; }")
+        self.btn_remove.setToolTip("Удалить выбранный голос.")
+        self.btn_remove.clicked.connect(self._remove_calibrate_voice)
+        btn_row.addWidget(self.btn_remove)
+
+        btn_refresh = QPushButton("Обновить")
+        btn_refresh.setMinimumHeight(36)
+        btn_refresh.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_refresh.setToolTip("Перезагрузить информацию о векторе.")
+        btn_refresh.clicked.connect(self._load_calibrate_voice_info)
+        btn_row.addWidget(btn_refresh)
+        btn_row.addStretch()
+        voices_layout.addLayout(btn_row)
         layout.addWidget(voices_group)
 
-        preset_group = QGroupBox("Quick Presets")
-        preset_layout = QHBoxLayout(preset_group)
-        preset_label = QLabel("Quick weight:")
-        preset_label.setStyleSheet("color: #e0e0e0; font-size: 12px;")
-        preset_layout.addWidget(preset_label)
+        preset_group = QGroupBox("Быстрые пресеты")
+        preset_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
+        preset_layout = QVBoxLayout(preset_group)
+        preset_layout.setSpacing(10)
+        preset_layout.setContentsMargins(10, 10, 10, 10)
+
+        preset_row = QHBoxLayout()
+        preset_row.addWidget(QLabel("Вес пресета:"))
         self.calibrate_preset_combo = QComboBox()
-        self.calibrate_preset_combo.addItems(["Equal", "Sad", "Happy", "Angry", "Whisper", "Custom"])
-        self.calibrate_preset_combo.setMinimumWidth(120)
-        preset_layout.addWidget(self.calibrate_preset_combo)
-        self.calibrate_apply_preset_btn = QPushButton("Apply")
-        self.calibrate_apply_preset_btn.setToolTip("Apply the selected preset to all voices in the list.")
-        self.calibrate_apply_preset_btn.clicked.connect(self._apply_preset)
-        self.calibrate_apply_preset_btn.setStyleSheet("QPushButton { background-color: #533483; color: white; border-radius: 6px; } QPushButton:hover { background-color: #7c3aed; }")
-        preset_layout.addWidget(self.calibrate_apply_preset_btn)
-        preset_layout.addStretch()
+        self.calibrate_preset_combo.addItems(["Равный", "Грустный", "Весёлый", "Злой", "Шёпот", "Пользовательский"])
+        self.calibrate_preset_combo.setMinimumHeight(36)
+        self.calibrate_preset_combo.setStyleSheet("QComboBox { font-size: 15px; padding: 6px; }")
+        preset_row.addWidget(self.calibrate_preset_combo)
+        preset_row.addStretch()
+        preset_layout.addLayout(preset_row)
+
+        self.cal_apply_preset_btn = QPushButton("Применить")
+        self.cal_apply_preset_btn.setMinimumHeight(36)
+        self.cal_apply_preset_btn.setStyleSheet("QPushButton { background-color: #533483; color: white; font-size: 15px; padding: 6px 12px; border-radius: 6px; } QPushButton:hover { background-color: #7c3aed; }")
+        self.cal_apply_preset_btn.setToolTip("Применить пресет ко всем голосам.")
+        self.cal_apply_preset_btn.clicked.connect(self._apply_preset)
+        preset_layout.addWidget(self.cal_apply_preset_btn)
         layout.addWidget(preset_group)
 
-        name_group = QGroupBox("Calibrated Voice Name")
-        name_layout = QHBoxLayout(name_group)
+        name_group = QGroupBox("Имя калиброванного голоса")
+        name_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
+        name_layout = QVBoxLayout(name_group)
+        name_layout.setSpacing(10)
+        name_layout.setContentsMargins(15, 15, 15, 15)
+
         self.calibrate_name_edit = QLineEdit()
-        self.calibrate_name_edit.setPlaceholderText("e.g. my_custom_voice")
-        self.calibrate_name_edit.setMinimumWidth(200)
-        self.calibrate_name_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.calibrate_name_edit.setToolTip("Unique name for the calibrated voice.")
-        name_layout.addWidget(QLabel("Name:"))
+        self.calibrate_name_edit.setPlaceholderText("напр. my_custom_voice")
+        self.calibrate_name_edit.setMinimumHeight(48)
+        self.calibrate_name_edit.setStyleSheet(
+            "QLineEdit { font-size: 16px; padding: 10px; background-color: #1a1a2e; border: 2px solid #3d3d5c; border-radius: 6px; }")
+        self.calibrate_name_edit.setToolTip("Уникальное имя для калиброванного голоса.")
         name_layout.addWidget(self.calibrate_name_edit)
         layout.addWidget(name_group)
 
-        self.btn_calibrate = QPushButton("Calibrate Voice", objectName="calibrateBtn")
+        self.btn_calibrate = QPushButton("Калибровать голос")
         self.btn_calibrate.setObjectName("calibrateBtn")
-        self.btn_calibrate.setFixedHeight(48)
-        self.btn_calibrate.setMinimumWidth(200)
-        self.btn_calibrate.setToolTip("Load vectors, normalize weights, uniform size, weighted sum.")
-        self.btn_calibrate.setStyleSheet("QPushButton#calibrateBtn { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #533483, stop:1 #0f3460); font-size: 15px; font-weight: bold; padding: 10px 24px; }")
+        self.btn_calibrate.setMinimumHeight(56)
+        self.btn_calibrate.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.btn_calibrate.setStyleSheet("QPushButton#calibrateBtn { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #533483, stop:1 #0f3460); font-size: 17px; font-weight: bold; padding: 14px 24px; border-radius: 8px; }")
+        self.btn_calibrate.setToolTip("Загрузить векторы, нормализовать, взвешенная сумма.")
         self.btn_calibrate.clicked.connect(self._start_calibrate)
-        layout.addWidget(self.btn_calibrate, 0, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.btn_calibrate)
 
         self.calibrate_progress = QProgressBar()
         self.calibrate_progress.setVisible(False)
+        self.calibrate_progress.setMinimumHeight(24)
         layout.addWidget(self.calibrate_progress)
 
-        result_group = QGroupBox("Calibration Result")
+        result_group = QGroupBox("Результат калибровки")
+        result_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
         result_layout = QVBoxLayout(result_group)
-        self.calibrate_result_label = QLabel("No result")
-        self.calibrate_result_label.setStyleSheet("color: #888; font-style: italic;")
+        result_layout.setSpacing(12)
+        result_layout.setContentsMargins(10, 10, 10, 10)
+
+        self.calibrate_result_label = QLabel("Нет результата")
+        self.calibrate_result_label.setStyleSheet("color: #e0e0e0; font-size: 15px; padding: 10px;")
         result_layout.addWidget(self.calibrate_result_label)
-        btn_save_calibrated = QPushButton("Save calibrated .pt")
-        btn_save_calibrated.setToolTip("Save the mixed vector to a .pt file.")
-        btn_save_calibrated.clicked.connect(self._save_calibrated_vector)
-        result_layout.addWidget(btn_save_calibrated)
-        btn_test_calibrated = QPushButton("Test on TTS")
-        btn_test_calibrated.setToolTip("Save calibrated .pt and switch to TTS tab to test.")
-        btn_test_calibrated.clicked.connect(self._test_calibrated_voice)
-        btn_test_calibrated.setStyleSheet("QPushButton { background-color: #22c55e; color: white; font-weight: bold; border-radius: 6px; } QPushButton:hover { background-color: #16a34a; }")
-        result_layout.addWidget(btn_test_calibrated)
+
+        btn_save_cal = QPushButton("Сохранить .pt")
+        btn_save_cal.setMinimumHeight(36)
+        btn_save_cal.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_save_cal.setToolTip("Сохранить смешанный вектор в .pt файл.")
+        btn_save_cal.clicked.connect(self._save_calibrated_vector)
+        result_layout.addWidget(btn_save_cal)
+
+        btn_test_cal = QPushButton("Тест в TTS")
+        btn_test_cal.setMinimumHeight(36)
+        btn_test_cal.setStyleSheet("QPushButton { background-color: #22c55e; color: white; font-weight: bold; font-size: 15px; padding: 6px 12px; border-radius: 6px; } QPushButton:hover { background-color: #16a34a; }")
+        btn_test_cal.setToolTip("Сохранить .pt и перейти во вкладку TTS.")
+        btn_test_cal.clicked.connect(self._test_calibrated_voice)
+        result_layout.addWidget(btn_test_cal)
         result_layout.addStretch()
         layout.addWidget(result_group)
         layout.addStretch()
-        tab.setLayout(layout)
-        self.tabs.addTab(tab, "Voice Calibration")
+        scroll.setWidget(scroll_contents)
+        main_layout.addWidget(scroll)
+
+        self.tabs.addTab(tab, "Калибровка голоса")
         self._calibrated_vector = None
+
 
     def _add_calibrate_voice(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select .pt Voice Vector", "", "Voice Vector Files (*.pt);;All Files (*)")
@@ -2224,186 +2287,264 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Test error:\n{e}")
 
 
-    # ======================== Вкладка Дообучение ========================
-
     def _setup_finetune_tab(self):
-        """Create fine-tuning tab."""
         tab = QWidget()
-        tab.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(10)
+        main_layout = QVBoxLayout(tab)
 
-        finetune_instr = "Model Fine-Tuning\n\n"
-        finetune_instr += "Fine-tune the Qwen3-TTS model on your own dataset.\n\n"
-        finetune_instr += "Requirements:\n"
-        finetune_instr += "  * JSONL dataset (audio + text + ref_audio)\n"
-        finetune_instr += "  * Qwen3-TTS-12Hz model (base or custom)\n"
-        finetune_instr += "  * GPU with >= 12GB VRAM"
-        instr_label = QLabel(finetune_instr)
-        instr_label.setStyleSheet("color: #e0e0e0; font-size: 12px; background-color: #0f3460; border-radius: 6px; padding: 10px;")
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background-color: transparent; border: none; }")
+        scroll_contents = QWidget()
+        layout = QVBoxLayout(scroll_contents)
+        layout.setSpacing(12)
+        layout.setContentsMargins(12, 12, 12, 12)
+        scroll.setWidget(scroll_contents)
+
+        instr_text = (
+            "Дообучение модели\n\n"
+            "Дообучите модель Qwen3-TTS на собственном датасете.\n\n"
+            "Требования:\n"
+            "  * JSONL датасет (аудио + текст + эталонное аудио)\n"
+            "  * Модель Qwen3-TTS-12Hz (базовая или пользовательская)\n"
+            "  * GPU с VRAM >= 12 ГБ"
+        )
+        instr_label = QLabel(instr_text)
+        instr_label.setStyleSheet(
+            "color: #e0e0e0; font-size: 15px; font-weight: bold; "
+            "background-color: #0f3460; border-radius: 8px; padding: 15px;"
+        )
         instr_label.setWordWrap(True)
+        instr_label.setMinimumHeight(130)
+        instr_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse |
+            Qt.TextInteractionFlag.TextSelectableByKeyboard
+        )
         layout.addWidget(instr_label)
 
-        model_group = QGroupBox("Model")
+        model_group = QGroupBox("Модель")
+        model_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
         model_layout = QVBoxLayout(model_group)
+        model_layout.setSpacing(8)
+        model_layout.setContentsMargins(8, 8, 8, 8)
+
         self.finetune_model_path_edit = QLineEdit()
-        self.finetune_model_path_edit.setPlaceholderText("Path to Qwen3-TTS model")
-        self.finetune_model_path_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.finetune_model_path_edit.setToolTip("Folder with the model for fine-tuning.")
+        self.finetune_model_path_edit.setPlaceholderText("Путь к модели Qwen3-TTS")
+        self.finetune_model_path_edit.setMinimumHeight(36)
+        self.finetune_model_path_edit.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_model_path_edit.setToolTip("Папка с моделью для дообучения.")
         model_layout.addWidget(self.finetune_model_path_edit)
-        btn_layout_model = QHBoxLayout()
-        btn_browse_model = QPushButton("Select model")
-        btn_browse_model.setToolTip("Select Qwen3-TTS model folder.")
+
+        browse_model_row = QHBoxLayout()
+        browse_model_row.setSpacing(8)
+        btn_browse_model = QPushButton("Выбрать модель")
+        btn_browse_model.setMinimumHeight(36)
+        btn_browse_model.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_browse_model.setToolTip("Выберите папку с моделью Qwen3-TTS.")
         btn_browse_model.clicked.connect(self._browse_finetune_model)
-        btn_layout_model.addWidget(btn_browse_model)
-        btn_layout_model.addStretch()
-        model_layout.addLayout(btn_layout_model)
+        browse_model_row.addWidget(btn_browse_model)
+        browse_model_row.addStretch()
+        model_layout.addLayout(browse_model_row)
         layout.addWidget(model_group)
 
-        dataset_group = QGroupBox("Dataset")
+        dataset_group = QGroupBox("Датасет")
+        dataset_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
         dataset_layout = QVBoxLayout(dataset_group)
+        dataset_layout.setSpacing(8)
+        dataset_layout.setContentsMargins(8, 8, 8, 8)
+
         self.finetune_jsonl_edit = QLineEdit()
-        self.finetune_jsonl_edit.setPlaceholderText("Path to JSONL dataset file")
-        self.finetune_jsonl_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.finetune_jsonl_edit.setToolTip("JSONL file with data for fine-tuning.")
+        self.finetune_jsonl_edit.setPlaceholderText("Путь к JSONL файлу датасета")
+        self.finetune_jsonl_edit.setMinimumHeight(36)
+        self.finetune_jsonl_edit.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_jsonl_edit.setToolTip("JSONL файл с данными для дообучения.")
         dataset_layout.addWidget(self.finetune_jsonl_edit)
-        btn_layout_dataset = QHBoxLayout()
-        btn_browse_jsonl = QPushButton("Select JSONL")
-        btn_browse_jsonl.setToolTip("Select JSONL dataset file.")
+
+        browse_jsonl_row = QHBoxLayout()
+        browse_jsonl_row.setSpacing(8)
+        btn_browse_jsonl = QPushButton("Выбрать JSONL")
+        btn_browse_jsonl.setMinimumHeight(36)
+        btn_browse_jsonl.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_browse_jsonl.setToolTip("Выберите JSONL файл датасета.")
         btn_browse_jsonl.clicked.connect(self._browse_finetune_jsonl)
-        btn_layout_dataset.addWidget(btn_browse_jsonl)
-        btn_layout_dataset.addStretch()
-        dataset_layout.addLayout(btn_layout_dataset)
-        btn_prepare = QPushButton("Prepare dataset (encode)")
-        btn_prepare.setToolTip("Encode audio into codec tokens using 12Hz tokenizer.")
+        browse_jsonl_row.addWidget(btn_browse_jsonl)
+        browse_jsonl_row.addStretch()
+        dataset_layout.addLayout(browse_jsonl_row)
+
+        btn_prepare = QPushButton("Подготовить датасет (кодирование)")
+        btn_prepare.setMinimumHeight(36)
+        btn_prepare.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_prepare.setToolTip("Закодировать аудио в токены кодека с помощью токенизатора 12Hz.")
         btn_prepare.clicked.connect(self._prepare_finetune_data)
         dataset_layout.addWidget(btn_prepare)
         layout.addWidget(dataset_group)
 
-        train_group = QGroupBox("Training Parameters")
-        train_layout = QGridLayout(train_group)
-        train_layout.addWidget(QLabel("Speaker name:"), 0, 0)
+        train_group = QGroupBox("Параметры обучения")
+        train_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
+        train_layout = QVBoxLayout(train_group)
+        train_layout.setSpacing(12)
+        train_layout.setContentsMargins(10, 10, 10, 10)
+
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Имя спикера:"))
         self.finetune_speaker_name = QLineEdit("custom_voice")
-        self.finetune_speaker_name.setMinimumWidth(150)
-        self.finetune_speaker_name.setToolTip("Speaker name for the custom model.")
-        train_layout.addWidget(self.finetune_speaker_name, 0, 1)
-        train_layout.addWidget(QLabel("Epochs:"), 1, 0)
+        self.finetune_speaker_name.setMinimumHeight(36)
+        self.finetune_speaker_name.setMinimumWidth(300)
+        self.finetune_speaker_name.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_speaker_name.setToolTip("Имя спикера для пользовательской модели.")
+        row1.addWidget(self.finetune_speaker_name)
+        train_layout.addLayout(row1)
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("Эпох:"))
         self.finetune_epochs = QSpinBox()
         self.finetune_epochs.setRange(1, 100)
         self.finetune_epochs.setValue(3)
-        self.finetune_epochs.setMinimumWidth(80)
-        self.finetune_epochs.setToolTip("Number of full passes through dataset. Recommended: 3-5.")
-        train_layout.addWidget(self.finetune_epochs, 1, 1)
-        train_layout.addWidget(QLabel("Batch size:"), 2, 0)
+        self.finetune_epochs.setMinimumHeight(36)
+        self.finetune_epochs.setMinimumWidth(150)
+        self.finetune_epochs.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_epochs.setToolTip("Количество полных проходов. Рекомендуется: 3-5.")
+        row2.addWidget(self.finetune_epochs)
+        train_layout.addLayout(row2)
+
+        row3 = QHBoxLayout()
+        row3.addWidget(QLabel("Размер батча:"))
         self.finetune_batch_size = QSpinBox()
         self.finetune_batch_size.setRange(1, 32)
         self.finetune_batch_size.setValue(2)
-        self.finetune_batch_size.setMinimumWidth(80)
-        self.finetune_batch_size.setToolTip("Batch size. Depends on VRAM: 2-4 on 12GB.")
-        train_layout.addWidget(self.finetune_batch_size, 2, 1)
-        train_layout.addWidget(QLabel("Learning rate:"), 3, 0)
+        self.finetune_batch_size.setMinimumHeight(36)
+        self.finetune_batch_size.setMinimumWidth(150)
+        self.finetune_batch_size.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_batch_size.setToolTip("Размер батча. Зависит от VRAM: 2-4 на 12 ГБ.")
+        row3.addWidget(self.finetune_batch_size)
+        train_layout.addLayout(row3)
+
+        row4 = QHBoxLayout()
+        row4.addWidget(QLabel("Скорость обучения:"))
         self.finetune_lr = QDoubleSpinBox()
         self.finetune_lr.setRange(0.00001, 0.001)
         self.finetune_lr.setValue(0.00002)
         self.finetune_lr.setDecimals(5)
         self.finetune_lr.setPrefix("0.")
-        self.finetune_lr.setMinimumWidth(120)
-        self.finetune_lr.setToolTip("Learning rate. Recommended: 2e-5.")
-        train_layout.addWidget(self.finetune_lr, 3, 1)
-        train_layout.addWidget(QLabel("Output path:"), 4, 0)
+        self.finetune_lr.setMinimumHeight(36)
+        self.finetune_lr.setMinimumWidth(200)
+        self.finetune_lr.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_lr.setToolTip("Скорость обучения. Рекомендуется: 2e-5.")
+        row4.addWidget(self.finetune_lr)
+        train_layout.addLayout(row4)
+
+        row5 = QHBoxLayout()
+        row5.addWidget(QLabel("Путь сохранения:"))
         self.finetune_output_path = QLineEdit()
-        self.finetune_output_path.setPlaceholderText("Path to save the model")
-        self.finetune_output_path.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.finetune_output_path.setToolTip("Folder where the fine-tuned model will be saved.")
-        train_layout.addWidget(self.finetune_output_path, 4, 1)
+        self.finetune_output_path.setPlaceholderText("Путь для сохранения модели")
+        self.finetune_output_path.setMinimumHeight(36)
+        self.finetune_output_path.setMinimumWidth(300)
+        self.finetune_output_path.setStyleSheet("font-size: 15px; padding: 6px;")
+        self.finetune_output_path.setToolTip("Папка, куда будет сохранена дообученная модель.")
+        row5.addWidget(self.finetune_output_path)
+        train_layout.addLayout(row5)
+
         layout.addWidget(train_group)
 
-        self.btn_finetune = QPushButton("Start Fine-Tuning", objectName="finetuneBtn")
+        self.btn_finetune = QPushButton("Начать дообучение")
         self.btn_finetune.setObjectName("finetuneBtn")
-        self.btn_finetune.setFixedHeight(48)
-        self.btn_finetune.setMinimumWidth(300)
-        self.btn_finetune.setToolTip("Start fine-tuning. Requires GPU >= 12GB VRAM.")
-        self.btn_finetune.setStyleSheet("QPushButton#finetuneBtn { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #533483); font-size: 15px; font-weight: bold; padding: 10px 24px; }")
+        self.btn_finetune.setMinimumHeight(56)
+        self.btn_finetune.setMinimumWidth(320)
+        self.btn_finetune.setStyleSheet("QPushButton#finetuneBtn { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #533483); font-size: 17px; font-weight: bold; padding: 14px 24px; border-radius: 8px; }")
+        self.btn_finetune.setToolTip("Начать дообучение. Требуется GPU >= 12 ГБ VRAM.")
         self.btn_finetune.clicked.connect(self._start_finetune)
         layout.addWidget(self.btn_finetune, 0, Qt.AlignmentFlag.AlignCenter)
 
         self.finetune_progress = QProgressBar()
         self.finetune_progress.setVisible(False)
+        self.finetune_progress.setMinimumHeight(24)
         layout.addWidget(self.finetune_progress)
 
-        log_group = QGroupBox("Training Log")
+        log_group = QGroupBox("Журнал обучения")
+        log_group.setStyleSheet("QGroupBox { font-size: 15px; font-weight: bold; padding: 10px; }")
         log_layout = QVBoxLayout(log_group)
+        log_layout.setSpacing(8)
+        log_layout.setContentsMargins(8, 8, 8, 8)
+
         self.finetune_log_text = QPlainTextEdit()
         self.finetune_log_text.setReadOnly(True)
-        self.finetune_log_text.setMaximumHeight(200)
-        self.finetune_log_text.setToolTip("Training log. Shows status, errors, and progress.")
-        self.finetune_log_text.setStyleSheet("QPlainTextEdit { background-color: #0a0a1a; color: #c8f7c5; border: 1px solid #3d3d5c; border-radius: 6px; padding: 8px; font-family: Consolas, monospace; font-size: 11px; }")
+        self.finetune_log_text.setMinimumHeight(200)
+        self.finetune_log_text.setStyleSheet(
+            "QPlainTextEdit { background-color: #0a0a1a; color: #c8f7c5; "
+            "border: 1px solid #3d3d5c; border-radius: 6px; padding: 8px; "
+            "font-family: Consolas, monospace; font-size: 15px; }"
+        )
         log_layout.addWidget(self.finetune_log_text)
-        btn_clear_finetune_log = QPushButton("Clear log")
-        btn_clear_finetune_log.setToolTip("Clear the training log window.")
-        btn_clear_finetune_log.clicked.connect(self.finetune_log_text.clear)
-        log_layout.addWidget(btn_clear_finetune_log)
+
+        btn_clear_log = QPushButton("Очистить журнал")
+        btn_clear_log.setMinimumHeight(36)
+        btn_clear_log.setStyleSheet("font-size: 15px; padding: 6px 12px;")
+        btn_clear_log.setToolTip("Очистить окно журнала обучения.")
+        btn_clear_log.clicked.connect(self.finetune_log_text.clear)
+        log_layout.addWidget(btn_clear_log)
         layout.addWidget(log_group)
         layout.addStretch()
-        tab.setLayout(layout)
-        self.tabs.addTab(tab, "Fine-tuning")
+        scroll.setWidget(scroll_contents)
+        main_layout.addWidget(scroll)
+
+        self.tabs.addTab(tab, "Дообучение")
         self.finetune_thread = None
 
     def _browse_finetune_model(self):
-        path = QFileDialog.getExistingDirectory(self, "Select Model Folder")
+        path = QFileDialog.getExistingDirectory(self, "Выберите папку с моделью")
         if path: self.finetune_model_path_edit.setText(path)
 
     def _browse_finetune_jsonl(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select JSONL Dataset", "", "JSONL Files (*.jsonl);;All Files (*)")
+        path, _ = QFileDialog.getOpenFileName(self, "Выберите JSONL датасет", "", "JSONL файлы (*.jsonl);;Все файлы (*)")
         if path: self.finetune_jsonl_edit.setText(path)
 
     def _prepare_finetune_data(self):
         input_jsonl = self.finetune_jsonl_edit.text().strip()
         if not input_jsonl or not os.path.exists(input_jsonl):
-            QMessageBox.warning(self, "Attention", "Specify input JSONL file.")
+            QMessageBox.warning(self, "Внимание", "Укажите входной JSONL файл.")
             return
         default_output = os.path.join(os.path.dirname(input_jsonl), os.path.basename(input_jsonl).replace('.jsonl', '_encoded.jsonl'))
-        output_jsonl, _ = QFileDialog.getSaveFileName(self, 'Save prepared dataset', default_output, 'JSONL Files (*.jsonl)')
+        output_jsonl, _ = QFileDialog.getSaveFileName(self, 'Сохранить подготовленный датасет', default_output, 'JSONL файлы (*.jsonl)')
         if not output_jsonl: return
         model_path = self.finetune_model_path_edit.text().strip()
         if not model_path: tokenizer_path = "Qwen/Qwen3-TTS-Tokenizer-12Hz"
         else:
             tokenizer_path = os.path.join(model_path, "Qwen3-TTS-Tokenizer-12Hz")
             if not os.path.exists(tokenizer_path): tokenizer_path = "Qwen/Qwen3-TTS-Tokenizer-12Hz"
-        self.finetune_log_text.appendPlainText(f'[prepare] Input: {input_jsonl}\n[prepare] Output: {output_jsonl}\n[prepare] Tokenizer: {tokenizer_path}\n')
+        self.finetune_log_text.appendPlainText(f'[подготовка] Вход: {input_jsonl}\n[подготовка] Выход: {output_jsonl}\n[подготовка] Токенизатор: {tokenizer_path}\n')
         script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
         prepare_script = os.path.join(script_dir, "finetuning", "prepare_data.py")
         if not os.path.exists(prepare_script):
-            QMessageBox.critical(self, "Error", f"prepare_data.py not found:\n{prepare_script}")
+            QMessageBox.critical(self, "Ошибка", f"prepare_data.py не найден:\n{prepare_script}")
             return
         cmd = [sys.executable, prepare_script, '--input_jsonl', input_jsonl, '--output_jsonl', output_jsonl, '--tokenizer_model_path', tokenizer_path, '--device', 'cuda:0']
-        self.finetune_log_text.appendPlainText('[prepare] Running...')
+        self.finetune_log_text.appendPlainText('[подготовка] Выполняется...')
         self.finetune_progress.setVisible(True)
         try:
             import subprocess
             process = subprocess.run(cmd, capture_output=True, text=True, cwd=script_dir)
-            if process.stdout: self.finetune_log_text.appendPlainText(f'[prepare] {process.stdout.strip()}')
-            if process.stderr: self.finetune_log_text.appendPlainText(f'[prepare ERR] {process.stderr.strip()}')
+            if process.stdout: self.finetune_log_text.appendPlainText(f'[подготовка] {process.stdout.strip()}')
+            if process.stderr: self.finetune_log_text.appendPlainText(f'[подготовка ОШИБКА] {process.stderr.strip()}')
             if process.returncode == 0:
-                self.finetune_log_text.appendPlainText('[prepare] OK Done!')
+                self.finetune_log_text.appendPlainText('[подготовка] ОК Готово!')
                 self.finetune_jsonl_edit.setText(output_jsonl)
-                QMessageBox.information(self, "Success", "Dataset prepared!")
+                QMessageBox.information(self, "Успешно", "Датасет подготовлен!")
             else:
-                QMessageBox.critical(self, 'Error', f'Preparation error:\n{process.stderr}')
+                QMessageBox.critical(self, 'Ошибка', f'Ошибка подготовки:\n{process.stderr}')
         except Exception as e:
-            QMessageBox.critical(self, 'Error', f'Run error:\n{e}')
+            QMessageBox.critical(self, 'Ошибка', f'Ошибка запуска:\n{e}')
         finally:
             self.finetune_progress.setVisible(False)
 
     def _start_finetune(self):
         if not self.finetune_model_path_edit.text().strip():
-            QMessageBox.warning(self, "Attention", "Specify model path.")
+            QMessageBox.warning(self, "Внимание", "Укажите путь к модели.")
             return
         if not self.finetune_jsonl_edit.text().strip():
-            QMessageBox.warning(self, "Attention", "Specify JSONL dataset path.")
+            QMessageBox.warning(self, "Внимание", "Укажите путь к JSONL датасету.")
             return
         if not self.finetune_output_path.text().strip():
-            QMessageBox.warning(self, "Attention", "Specify output path.")
+            QMessageBox.warning(self, "Внимание", "Укажите путь сохранения.")
             return
         self.finetune_log_text.appendPlainText('\n' + '='*50 + '\n')
         self.finetune_log_text.appendPlainText(f'[finetune] Model: {self.finetune_model_path_edit.text()}')
@@ -2416,15 +2557,15 @@ class MainWindow(QMainWindow):
         self.finetune_log_text.appendPlainText('='*50 + '\n')
         self.finetune_progress.setVisible(True)
         self.btn_finetune.setEnabled(False)
-        self.btn_finetune.setText("Training...")
-        self._set_status("Fine-tuning...", "#fbbf24")
+        self.btn_finetune.setText("Обучение...")
+        self._set_status("Дообучение...", "#fbbf24")
         script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
         train_script = os.path.join(script_dir, "finetuning", "sft_12hz.py")
         if not os.path.exists(train_script):
-            QMessageBox.critical(self, "Error", f"sft_12hz.py not found:\n{train_script}")
+            QMessageBox.critical(self, "Ошибка", f"sft_12hz.py не найден:\n{train_script}")
             self.finetune_progress.setVisible(False)
             self.btn_finetune.setEnabled(True)
-            self.btn_finetune.setText("Start Fine-Tuning")
+            self.btn_finetune.setText("Начать дообучение")
             return
         cmd = [sys.executable, train_script, '--init_model_path', self.finetune_model_path_edit.text(), '--output_model_path', self.finetune_output_path.text(), '--train_jsonl', self.finetune_jsonl_edit.text(), '--speaker_name', self.finetune_speaker_name.text(), '--num_epochs', str(self.finetune_epochs.value()), '--batch_size', str(self.finetune_batch_size.value()), '--lr', str(self.finetune_lr.value())]
         try:
@@ -2437,21 +2578,21 @@ class MainWindow(QMainWindow):
                     scrollbar.setValue(scrollbar.maximum())
                 process.wait()
                 if process.returncode == 0:
-                    self.finetune_log_text.appendPlainText("\n[finetune] OK Training complete!")
+                    self.finetune_log_text.appendPlainText("\n[дообучение] OK Обучение завершено!")
                 else:
-                    self.finetune_log_text.appendPlainText("\n[finetune] ERROR Training failed!")
+                    self.finetune_log_text.appendPlainText("\n[дообучение] ОШИБКА Обучение не удалось!")
                 self.btn_finetune.setEnabled(True)
-                self.btn_finetune.setText("Start Fine-Tuning")
+                self.btn_finetune.setText("Начать дообучение")
                 self.finetune_progress.setVisible(False)
-                if process.returncode == 0: self._set_status("Training complete", "#4ade80")
-                else: self._set_status("Training failed", "#ef4444")
+                if process.returncode == 0: self._set_status("Обучение завершено", "#4ade80")
+                else: self._set_status("Обучение не удалось", "#ef4444")
             finetune_worker = threading.Thread(target=read_output, daemon=True)
             finetune_worker.start()
         except Exception as e:
-            self.finetune_log_text.appendPlainText(f"[finetune] Error: {e}")
-            QMessageBox.critical(self, "Error", f"Cannot start fine-tuning:\n{e}")
+            self.finetune_log_text.appendPlainText(f"[дообучение] Ошибка: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Не могу запустить дообучение:\n{e}")
             self.btn_finetune.setEnabled(True)
-            self.btn_finetune.setText("Start Fine-Tuning")
+            self.btn_finetune.setText("Начать дообучение")
             self.finetune_progress.setVisible(False)
 
 
