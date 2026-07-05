@@ -1,0 +1,25 @@
+# === Основные пакеты ===
+torch>=2.1.0
+torchaudio>=2.1.0
+transformers>=4.40.0
+accelerate>=0.25.0
+
+# === GUI (PyQt6) ===
+PyQt6>=6.5.0
+PyQt6-Qt6>=6.5.0
+PyQt6-sip>=13.5.0
+
+# === Audio обработка ===
+librosa>=0.10.0
+soundfile>=0.12.1
+sounddevice>=0.4.6
+sox>=1.4.1
+faster-whisper>=1.0.0
+
+# === ML утилиты ===
+einops>=0.7.0
+safetensors>=0.4.0
+huggingface-hub>=0.20.0
+
+# === Веб-демо (опционально) ===
+gradio>=4.0.0

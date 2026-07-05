@@ -43,3 +43,19 @@ Thumbs.db
 # Generated/Output
 output/
 result/
+
+# HuggingFace cache (моделли)
+~/.cache/huggingface/
+
+# Audio output
+tts_output/
+audio_output/
+*.wav
+*.mp3
+
+# Windows thumbnails
+Thumbs.db
+
+# Node (если нужен фронтенд)
+node_modules/
+.npmrc

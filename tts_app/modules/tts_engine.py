@@ -1,4 +1,4 @@
-"""TTS Engine — обёртка над Qwen3-TTS для синтеза речи."""
+"""TTS Engine — обёртка над shifter-tts для синтеза речи."""
 
 import os
 import re
@@ -111,7 +111,7 @@ def _normalize_stress_marks(text: str) -> str:
     """
     Удалить символы ударения (U+0301 combining acute accent) из текста.
     
-    Модель Qwen3-TTS не поддерживает ударения — токенизатор BPE разбивает
+    Модель shifter-tts не поддерживает ударения — токенизатор BPE разбивает
     `е́` на два отдельных токена (`е` + `́`), что ломает произношение.
     
     Решение: удаляем combining-символы перед отправкой в модель,
@@ -133,7 +133,7 @@ def _has_stress_marks(text: str) -> bool:
 
 
 class TTSEngine:
-    """Обёртка над Qwen3-TTS для синтеза речи с voice cloning."""
+    """Обёртка над shifter-tts для синтеза речи с voice cloning."""
 
     def __init__(self):
         self.model: Optional[Qwen3TTSModel] = None
@@ -168,7 +168,7 @@ class TTSEngine:
         device: str = "auto",
         dtype: str = "float16",
     ) -> Tuple[bool, str]:
-        """Загрузить модель Qwen3-TTS.
+        """Загрузить модель shifter-tts.
 
         Returns: (success: bool, message: str)
         """
@@ -267,15 +267,6 @@ class TTSEngine:
         top_p: float = 1.0,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ) -> Tuple[Optional[np.ndarray], int, str]:
-        # Маппинг языковых кодов — модель принимает полные названия
-        lang_map = {
-            "ru": "russian", "en": "english", "chinese": "chinese",
-            "fr": "french", "de": "german", "it": "italian",
-            "ja": "japanese", "ko": "korean", "pt": "portuguese",
-            "es": "spanish", "auto": "auto",
-        }
-        language = lang_map.get(language.lower(), language)
-
         """Синтезировать речь.
 
         Поддерживаемые возможности:
@@ -298,6 +289,15 @@ class TTSEngine:
 
         Returns: (audio_array, sample_rate, error_message_or_empty)
         """
+        # Маппинг языковых кодов — модель принимает полные названия
+        lang_map = {
+            "ru": "russian", "en": "english", "chinese": "chinese",
+            "fr": "french", "de": "german", "it": "italian",
+            "ja": "japanese", "ko": "korean", "pt": "portuguese",
+            "es": "spanish", "auto": "auto",
+        }
+        language = lang_map.get(language.lower(), language)
+
         if self.model is None:
             return None, 0, "Модель не загружена. Сначала загрузите модель."
 
@@ -616,7 +616,10 @@ class TTSEngine:
             return False, msg
 
     def unload_model(self):
-        """Выгрузить модель из памяти."""
+        """Выгрузить модель из памяти.
+        
+        Освобождает модель из памяти PyTorch и очищает CUDA кэш.
+        """
         with self._lock:
             if self.model is not None:
                 del self.model

@@ -667,7 +667,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Qwen3-TTS Studio")
+        self.setWindowTitle("shifter-tts Studio")
         self.setMinimumSize(900, 700)
         self.resize(1100, 800)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -723,7 +723,7 @@ class MainWindow(QMainWindow):
 
         # Заголовок
         header = QHBoxLayout()
-        title_label = QLabel("🎙️ Qwen3-TTS Studio")
+        title_label = QLabel("🎙️ shifter-tts Studio")
         title_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #00d4ff; padding: 4px;")
         header.addWidget(title_label)
         header.addStretch()
@@ -782,7 +782,7 @@ class MainWindow(QMainWindow):
             "Ударения: ́ над гласной (напр. \"Приве́т, как де́ла?\")\n"
             "⚠ Ударения удаляются перед моделью — для отображения в логе.\n\n"
             "⚠ Нужен референсный аудиофайл для voice cloning!\n\n"
-            "📖 полная памятка в HELP.md""
+            "📖 полная памятка в HELP.md\n"
         )
         self.tts_text_edit.setMaximumHeight(150)
         self.tts_text_edit.setMinimumWidth(600)  # Делаем поле шире
@@ -2306,10 +2306,10 @@ class MainWindow(QMainWindow):
 
         instr_text = (
             "Дообучение модели\n\n"
-            "Дообучите модель Qwen3-TTS на собственном датасете.\n\n"
+            "Дообучите модель shifter-tts на собственном датасете.\n\n"
             "Требования:\n"
             "  * JSONL датасет (аудио + текст + эталонное аудио)\n"
-            "  * Модель Qwen3-TTS-12Hz (базовая или пользовательская)\n"
+            "  * Модель shifter-tts-12Hz (базовая или пользовательская)\n"
             "  * GPU с VRAM >= 12 ГБ"
         )
         instr_label = QLabel(instr_text)
@@ -2332,7 +2332,7 @@ class MainWindow(QMainWindow):
         model_layout.setContentsMargins(8, 8, 8, 8)
 
         self.finetune_model_path_edit = QLineEdit()
-        self.finetune_model_path_edit.setPlaceholderText("Путь к модели Qwen3-TTS")
+        self.finetune_model_path_edit.setPlaceholderText("Путь к модели shifter-tts")
         self.finetune_model_path_edit.setMinimumHeight(36)
         self.finetune_model_path_edit.setStyleSheet("font-size: 15px; padding: 6px;")
         self.finetune_model_path_edit.setToolTip("Папка с моделью для дообучения.")
@@ -2343,7 +2343,7 @@ class MainWindow(QMainWindow):
         btn_browse_model = QPushButton("Выбрать модель")
         btn_browse_model.setMinimumHeight(36)
         btn_browse_model.setStyleSheet("font-size: 15px; padding: 6px 12px;")
-        btn_browse_model.setToolTip("Выберите папку с моделью Qwen3-TTS.")
+        btn_browse_model.setToolTip("Выберите папку с моделью shifter-tts.")
         btn_browse_model.clicked.connect(self._browse_finetune_model)
         browse_model_row.addWidget(btn_browse_model)
         browse_model_row.addStretch()
@@ -2669,7 +2669,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(lang_default_group)
 
         # Путь к TTS модели
-        tts_path_group = QGroupBox("Путь к модели Qwen3-TTS")
+        tts_path_group = QGroupBox("Путь к модели shifter-tts")
         tts_path_layout = QHBoxLayout(tts_path_group)
 
         self.tts_model_path_edit = QLineEdit()
@@ -2678,7 +2678,7 @@ class MainWindow(QMainWindow):
             "~/.cache/huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base"
         )
         self.tts_model_path_edit.setToolTip(
-            "📁 Путь к папке с моделью Qwen3-TTS.\n"
+            "📁 Путь к папке с моделью shifter-tts.\n"
             "• Оставьте пустым для автоматической загрузки из HuggingFace\n"
             "• Или укажите путь к скачанной модели локально"
         )
@@ -2846,6 +2846,13 @@ class MainWindow(QMainWindow):
         self.settings["tts_model_path"] = self.tts_model_path_edit.text().strip()
         self.settings["whisper_model_size"] = self.settings_whisper_size.currentText()
         self.settings["default_language"] = self.settings_default_lang.currentText()
+
+        # Если генерация идёт — отменяем её, иначе unload сломает фоновый поток
+        if self.tts_thread and self.tts_thread.isRunning():
+            if hasattr(self.tts_thread, 'cancel'):
+                self.tts_thread.cancel()
+            self.tts_thread.wait(3000)  # ждём до 3 секунд завершения
+            self.btn_cancel.setVisible(False)
 
         # Перезагрузка моделей с новыми настройками
         if self.tts_engine.model is not None:

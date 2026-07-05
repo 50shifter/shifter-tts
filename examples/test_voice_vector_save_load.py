@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Example: Save and load voice vectors (.pt files) for Qwen3-TTS.
+Example: Save and load voice vectors (.pt files) for shifter-tts.
 
 This demonstrates how to:
 1. Extract a voice vector from reference audio and save it to .pt
@@ -39,7 +39,7 @@ from qwen_tts import Qwen3TTSModel
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Save and load voice vectors for Qwen3-TTS"
+        description="Save and load voice vectors for shifter-tts"
     )
     parser.add_argument(
         "--model-path", type=str, default="Qwen/Qwen3-TTS-12Hz-1.7B-Base",
