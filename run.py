@@ -117,7 +117,7 @@ def main():
         input()
         sys.exit(1)
     
-    if not download_models():
+    if not download_model():
         show("WARNING: Could not download model automatically")
         show("Try: python download_model.py base")
     
