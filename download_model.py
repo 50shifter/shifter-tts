@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-shifter-tts — Загрузка моделей из HuggingFace Hub.
+shifter-tts — Download models from HuggingFace Hub.
 
-Запуск:
-    python download_model.py              # базовая модель (voice cloning)
-    python download_model.py custom       # кастомная версия с голосом
+Usage:
+    python download_model.py              # base model (voice cloning)
+    python download_model.py custom       # custom voice version
     python download_model.py voice_design # Voice Design
-    python download_model.py tokenizer    # только токенизатор (для обучения)
+    python download_model.py tokenizer    # tokenizer only (for training)
 
-Примечание:
-    - Публичные модели скачиваются БЕСПЛАТНО без ключа
-    - Если модель требует принятия лицензии — откроется браузер
-    - Аккаунт на HuggingFace бесплатный: https://huggingface.co/join
+Notes:
+    - Public models are downloaded for FREE without any key
+    - If a model requires accepting a license, the terminal will open
+    - Free HuggingFace account: https://huggingface.co/join
 """
+
+import subprocess
+
+subprocess.run(["cmd.exe", "/c", "chcp 65001"], shell=True)
 
 import argparse
 import os
@@ -20,16 +24,16 @@ import sys
 
 
 MODELS = {
-    "base":      ("Qwen/Qwen3-TTS-12Hz-1.7B-Base",     "Базовая модель (voice cloning)"),
-    "custom":    ("Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice", "Кастомная версия с голосом"),
-    "voice_design": ("Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign", "Voice Design (генерация голоса по описанию)"),
-    "tokenizer": ("Qwen/Qwen3-TTS-Tokenizer-12Hz",     "Токенизатор 12 Гц (для обучения)"),
+    "base":      ("Qwen/Qwen3-TTS-12Hz-1.7B-Base",     "Base model (voice cloning)"),
+    "custom":    ("Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice", "Custom voice version"),
+    "voice_design": ("Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign", "Voice Design (generate voice by description)"),
+    "tokenizer": ("Qwen/Qwen3-TTS-Tokenizer-12Hz",     "12Hz tokenizer (for training)"),
 }
 
 
 def download_model(model_id: str, cache_dir: str = None):
-    """Скачать модель из HuggingFace."""
-    print(f"📥 Скачивание модели: {model_id}")
+    """Download model from HuggingFace."""
+    print(f"Downloading model: {model_id}")
     
     if cache_dir is None:
         cache_dir = os.path.expanduser("~/.cache/huggingface/hub")
@@ -43,79 +47,71 @@ def download_model(model_id: str, cache_dir: str = None):
             resume_download=True,
         )
         
-        size_gb = 0
-        for dirpath, _, filenames in os.walk(local_dir):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                if os.path.isfile(fp):
-                    size_gb += os.path.getsize(fp) / (1024**3)
-        
-        print(f"✅ Модель сохранена в: {local_dir}")
-        print(f"   Размер: ~{size_gb:.1f} ГБ")
+        print(f"Model saved to: {local_dir}")
         return local_dir
         
     except Exception as e:
         error_msg = str(e).lower()
         
         if "401" in error_msg or "unauthorized" in error_msg or "authentication" in error_msg:
-            print("")
+            print()
             print("=" * 60)
-            print("  ⚠️  Требуется аккаунт HuggingFace")
+            print("  WARNING: HuggingFace account required")
             print("=" * 60)
             print()
-            print(f"  Модель '{model_id}' требует принятия лицензии.")
+            print(f"  Model '{model_id}' requires accepting license.")
             print()
-            print("  1. Создайте бесплатный аккаунт:")
+            print("  1. Create a free account:")
             print("     https://huggingface.co/join")
             print()
-            print("  2. Примите лицензию на странице модели:")
+            print("  2. Accept the license on the model page:")
             print(f"     https://huggingface.co/{model_id}")
             print()
-            print("  3. Войдите в терминал:")
+            print("  3. Login in terminal:")
             print("     huggingface-cli login")
             print()
-            print("  Или используйте токен (если уже есть аккаунт):")
+            print("  Or use a token (if you already have an account):")
             print("     huggingface-cli login --token YOUR_TOKEN_HERE")
             print("=" * 60)
         elif "gated" in error_msg or "access denied" in error_msg:
-            print("")
+            print()
             print("=" * 60)
-            print("  ⚠️  Модель требует доступа (gated model)")
+            print("  WARNING: Model requires access (gated model)")
             print("=" * 60)
             print()
-            print(f"  Перейдите на страницу модели и примите условия:")
+            print(f"  Go to model page and accept conditions:")
             print(f"  https://huggingface.co/{model_id}")
             print()
-            print("  После принятия — запустите снова.")
+            print("  After accepting - run again.")
             print("=" * 60)
         else:
-            print(f"❌ Ошибка при скачивании: {e}")
+            print(f"Error downloading: {e}")
         
         sys.exit(1)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Скачать модель shifter-tts из HuggingFace")
+    parser = argparse.ArgumentParser(description="Download shifter-tts models from HuggingFace")
     parser.add_argument(
         "model",
         choices=list(MODELS.keys()),
         default="base",
-        help="Какую модель скачать (по умолчанию: base)",
+        help="Which model to download (default: base)",
     )
     parser.add_argument(
         "--cache-dir",
         type=str,
         default=None,
-        help="Путь к кэшу HuggingFace (по умолчанию: ~/.cache/huggingface/hub)",
+        help="HuggingFace cache path (default: ~/.cache/huggingface/hub)",
     )
     args = parser.parse_args()
     
     model_id = MODELS[args.model][0]
     description = MODELS[args.model][1]
     
-    print(f"🎯 Модель: {model_id}")
-    print(f"   Описание: {description}")
-    print(f"   Страница: https://huggingface.co/{model_id}")
+    print(f"Model: {model_id}")
+    print(f"Description: {description}")
+    print(f"Page: https://huggingface.co/{model_id}")
     print()
     
     download_model(model_id, args.cache_dir)
