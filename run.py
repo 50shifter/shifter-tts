@@ -123,10 +123,7 @@ def main():
     
     show("Starting shifter-tts...")
     py_exe = get_venv_python()
-    os.chdir(PROJECT_DIR)
-    sys.path.insert(0, PROJECT_DIR)
-    from gui.window import main
-    main()
+    subprocess.run([py_exe, "-m", "tts_app"])
 
 
 if __name__ == "__main__":
