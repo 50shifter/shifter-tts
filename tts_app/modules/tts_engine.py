@@ -2,6 +2,7 @@
 
 import os
 import re
+import traceback
 import threading
 import unicodedata
 from dataclasses import dataclass
