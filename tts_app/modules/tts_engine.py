@@ -64,6 +64,51 @@ INSTRUCTION_PARAMS = {
 # Регулярное выражение для поиска инструкций в скобках: [смеётся], [шёпотом]
 INSTRUCTION_PATTERN = re.compile(r'\[([^\]]+)\]')
 
+# Естественные placeholder-тексты для инструкций — модель TTS может их корректно синтезировать.
+# Вместо отправки самого слова инструкции ("смеёться") мы отправляем то, что модель должна произнести.
+INSTRUCTION_PLACEHOLDERS = {
+    # Смех
+    "смеётся":     "ха-ха",
+    "смеяться":    "ха-ха",
+    "хохочет":     "ха-ха-ха",
+    "хохотать":    "ха-ха-ха",
+    "плачет":      "бу-бу",
+    "плакать":     "бу-бу",
+    # Шёпот
+    "шёпотом":     None,  # шёпот — меняем только параметры, не генерируем отдельно
+    "шепчет":      None,
+    "шёпот":       None,
+    # Крик/громко
+    "кричит":      "эй!",
+    "кричать":     "эй!",
+    "громко":      None,  # меняем только параметры
+    # Тихо
+    "тихо":        None,  # меняем только параметры
+    # Вздох
+    "вздыхает":    "эх",
+    "вздыхать":    "эх",
+    # Эмоциональные тона — меняем только параметры
+    "грустно":     None,
+    "радостно":    None,
+    "сердито":     None,
+    "удивлённо":   None,
+    # Паузы обрабатываются отдельно (is_pause)
+}
+
+# Английские placeholder-тексты
+def _get_placeholder(instruction: str) -> Optional[str]:
+    """Получить естественный placeholder для инструкции."""
+    lower = instruction.lower().strip()
+    if lower in INSTRUCTION_PLACEHOLDERS:
+        return INSTRUCTION_PLACEHOLDERS[lower]
+    # Английские
+    en_map = {
+        "laughing": "ha-ha", "laughs": "ha-ha",
+        "whispering": None, "whispers": None,
+        "shouting": "hey!", "shouts": "hey!",
+    }
+    return en_map.get(lower)
+
 
 def _parse_text_with_instructions(text: str) -> List[TextSegment]:
     """
@@ -364,27 +409,42 @@ class TTSEngine:
                             audio_parts.append(silence)
                             self._log(f"  [{seg_idx+1}/{total_segments}] Пауза {duration}с")
                         else:
-                            # Генерируем с особыми параметрами
-                            seg_kwargs = dict(default_gen_kwargs)
-                            seg_kwargs["temperature"] = params.get("temperature", temperature)
-                            seg_kwargs["top_k"] = params.get("top_k", top_k)
+                            # Получаем естественный placeholder для инструкции.
+                            # Если placeholder = None — инструкция меняет только параметры
+                            # (шёпот, тихо, эмоциональный тон), а не генерирует отдельный звук.
+                            placeholder = _get_placeholder(instruction)
 
-                            # Для инструкций генерируем placeholder-текст,
-                            # чтобы модель создала характерную интонацию
-                            gen_text = f"{instruction}"
+                            if placeholder is not None:
+                                # Генерируем placeholder-текст с особыми параметрами,
+                                # чтобы модель создала характерную интонацию/звук
+                                seg_kwargs = dict(default_gen_kwargs)
+                                seg_kwargs["temperature"] = params.get("temperature", temperature)
+                                seg_kwargs["top_k"] = params.get("top_k", top_k)
+                                # Ограничиваем max_new_tokens для коротких placeholder'ов,
+                                # чтобы модель не зависала на нестабильной генерации
+                                seg_kwargs["max_new_tokens"] = params.get("max_new_tokens", 64)
 
-                            wavs, sr_seg = self._generate_segment(
-                                text=gen_text,
-                                voice_clone_prompt=voice_clone_prompt,
-                                ref_audio_path=ref_audio_path,
-                                ref_text=ref_text,
-                                x_vector_only_mode=x_vector_only_mode,
-                                language=language,
-                                gen_kwargs=seg_kwargs,
-                            )
-                            if wavs is not None:
-                                audio_parts.append(wavs)
-                                self._log(f"  [{seg_idx+1}/{total_segments}] Инструкция: {params['desc']}")
+                                wavs, sr_seg = self._generate_segment(
+                                    text=placeholder,
+                                    voice_clone_prompt=voice_clone_prompt,
+                                    ref_audio_path=ref_audio_path,
+                                    ref_text=ref_text,
+                                    x_vector_only_mode=x_vector_only_mode,
+                                    language=language,
+                                    gen_kwargs=seg_kwargs,
+                                )
+                                if wavs is not None:
+                                    audio_parts.append(wavs)
+                                    self._log(f"  [{seg_idx+1}/{total_segments}] Инструкция: {params['desc']} → '{placeholder}'")
+                            else:
+                                # Инstrukция без placeholder — запоминаем параметры
+                                # и применяем их к следующему текстовому сегменту
+                                self._log(f"  [{seg_idx+1}/{total_segments}] Инструкция: {params['desc']} (параметры применятся к следующему сегменту)")
+                                # Сохраняем параметры для применения к следующему сегменту
+                                self._pending_instruction_params = {
+                                    "temperature": params.get("temperature", temperature),
+                                    "top_k": params.get("top_k", top_k),
+                                }
 
                         seg_progress = min(seg_progress_base + 70 // total_segments, 85)
                         if progress_callback:
@@ -394,6 +454,13 @@ class TTSEngine:
                         # Обычный текст — удаляем ударения перед моделью
                         clean_text = _normalize_stress_marks(segment.content)
 
+                        # Применяем параметры от предыдущей инструкции (шёпот, тон и т.д.)
+                        seg_kwargs = dict(default_gen_kwargs)
+                        if hasattr(self, '_pending_instruction_params') and self._pending_instruction_params:
+                            seg_kwargs.update(self._pending_instruction_params)
+                            self._log(f"  [{seg_idx+1}/{total_segments}] → параметры инструкции применены (temp={seg_kwargs['temperature']}, top_k={seg_kwargs['top_k']})")
+                            delattr(self, '_pending_instruction_params')
+
                         wavs, sr_seg = self._generate_segment(
                             text=clean_text,
                             voice_clone_prompt=voice_clone_prompt,
@@ -401,7 +468,7 @@ class TTSEngine:
                             ref_text=ref_text,
                             x_vector_only_mode=x_vector_only_mode,
                             language=language,
-                            gen_kwargs=default_gen_kwargs,
+                            gen_kwargs=seg_kwargs,
                         )
                         if wavs is not None:
                             audio_parts.append(wavs)
