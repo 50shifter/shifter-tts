@@ -14,6 +14,7 @@ import soundfile as sf
 import torch
 
 from qwen_tts import Qwen3TTSModel
+from tts_app.config import PAUSE_SR
 from qwen_tts.inference.qwen3_tts_model import VoiceClonePromptItem
 
 
@@ -31,6 +32,8 @@ class TextSegment:
 INSTRUCTION_PARAMS = {
     "смеётся":     {"temperature": 1.2, "top_k": 80, "desc": "смех"},
     "смеяться":    {"temperature": 1.2, "top_k": 80, "desc": "смех"},
+    "смех":        {"temperature": 1.2, "top_k": 80, "desc": "смех"},
+    "смеяться_sm": {"temperature": 1.2, "top_k": 80, "desc": "смех"},
     "хохочет":     {"temperature": 1.3, "top_k": 90, "desc": "громкий смех"},
     "хохотать":    {"temperature": 1.3, "top_k": 90, "desc": "громкий смех"},
     "шёпотом":     {"temperature": 0.5, "top_k": 20, "desc": "шёпот"},
@@ -53,6 +56,8 @@ INSTRUCTION_PARAMS = {
     # Английские инструкции
     "laughing":    {"temperature": 1.2, "top_k": 80, "desc": "laughter"},
     "laughs":      {"temperature": 1.2, "top_k": 80, "desc": "laughter"},
+    "laugh":       {"temperature": 1.2, "top_k": 80, "desc": "laughter"},
+    "laughing_sm": {"temperature": 1.2, "top_k": 80, "desc": "laughter"},
     "whispering":  {"temperature": 0.5, "top_k": 20, "desc": "whisper"},
     "whispers":    {"temperature": 0.5, "top_k": 20, "desc": "whisper"},
     "shouting":    {"temperature": 1.3, "top_k": 90, "desc": "shout"},
@@ -70,6 +75,7 @@ INSTRUCTION_PLACEHOLDERS = {
     # Смех
     "смеётся":     "ха-ха",
     "смеяться":    "ха-ха",
+    "смех":        "ха-ха",
     "хохочет":     "ха-ха-ха",
     "хохотать":    "ха-ха-ха",
     "плачет":      "бу-бу",
@@ -107,7 +113,31 @@ def _get_placeholder(instruction: str) -> Optional[str]:
         "whispering": None, "whispers": None,
         "shouting": "hey!", "shouts": "hey!",
     }
-    return en_map.get(lower)
+    if lower in en_map:
+        return en_map[lower]
+    # Fallback: если инструкция не найдена напрямую,
+    # ищем похожую через _find_similar_instruction
+    similar = _find_similar_instruction(lower)
+    if similar and similar != lower and similar in INSTRUCTION_PLACEHOLDERS:
+        return INSTRUCTION_PLACEHOLDERS[similar]
+    return None
+
+
+def _find_similar_instruction(instruction: str) -> Optional[str]:
+    """
+    Найти похожую инструкцию если точное совпадение не найдено.
+    Проверяет частичные совпадения и синонимы.
+    """
+    lower = instruction.lower().strip()
+
+    # Частичное совпадение: инструкция содержит известную или наоборот
+    for known in INSTRUCTION_PARAMS:
+        if lower == known:
+            return known
+        if lower in known or known in lower:
+            return known
+
+    return None
 
 
 def _parse_text_with_instructions(text: str) -> List[TextSegment]:
@@ -190,6 +220,8 @@ class TTSEngine:
         self._lock = threading.Lock()
         # Кэшированный вектор голоса (если загружен из .pt)
         self._cached_voice_vector: Optional[List[VoiceClonePromptItem]] = None
+        # Параметры от предыдущей инструкции (шёпот, тон и т.д.)
+        self._pending_instruction_params: Optional[dict] = None
 
     def set_log_callback(self, callback):
         """Установить коллбэк для логирования: callback(msg: str)"""
@@ -198,13 +230,18 @@ class TTSEngine:
     def _log(self, msg: str):
         if hasattr(self, "_log_callback") and self._log_callback:
             self._log_callback(msg)
-        # Также пишем в файл лога
+        # Также пишем в файл лога с ротацией
         try:
             log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app.log")
-            with open(log_file, "a", encoding="utf-8") as f:
-                from datetime import datetime
-                timestamp = datetime.now().strftime("%H:%M:%S")
-                f.write(f"[{timestamp}] [TTS] {msg}\n")
+            import logging
+            logger = logging.getLogger(f"tts_engine_{id(self)}")
+            if not logger.handlers:
+                handler = logging.FileHandler(log_file, encoding="utf-8")
+                formatter = logging.Formatter("%(asctime)s [TTS] %(message)s", datefmt="%H:%M:%S")
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+                logger.setLevel(logging.INFO)
+            logger.info(msg)
         except Exception:
             pass
 
@@ -398,14 +435,20 @@ class TTSEngine:
                         params = INSTRUCTION_PARAMS.get(instruction)
 
                         if params is None:
-                            self._log(f"⚠ Неизвестная инструкция: [{instruction}] — пропускаем")
-                            continue
+                            # Попробуем найти похожую инструкцию
+                            fallback = _find_similar_instruction(instruction)
+                            if fallback and fallback in INSTRUCTION_PARAMS:
+                                self._log(f"⚠ Неизвестная инструкция: [{instruction}] — используем fallback: {fallback}")
+                                params = INSTRUCTION_PARAMS[fallback]
+                            else:
+                                self._log(f"⚠ Неизвестная инструкция: [{instruction}] — пропускаем")
+                                continue
 
                         if params.get("is_pause"):
                             # Пауза — генерируем тишину
                             duration = params.get("duration", 0.5)
-                            sr_temp = 24000  # стандартная частота для паузы
-                            silence = np.zeros(int(duration * sr_temp), dtype=np.float32)
+                            sr = PAUSE_SR
+                            silence = np.zeros(int(duration * sr), dtype=np.float32)
                             audio_parts.append(silence)
                             self._log(f"  [{seg_idx+1}/{total_segments}] Пауза {duration}с")
                         else:
@@ -445,6 +488,7 @@ class TTSEngine:
                                     "temperature": params.get("temperature", temperature),
                                     "top_k": params.get("top_k", top_k),
                                 }
+                                self._log(f"  [{seg_idx+1}/{total_segments}] Параметры инструкции сохранены (temp={self._pending_instruction_params['temperature']}, top_k={self._pending_instruction_params['top_k']})")
 
                         seg_progress = min(seg_progress_base + 70 // total_segments, 85)
                         if progress_callback:
@@ -456,10 +500,10 @@ class TTSEngine:
 
                         # Применяем параметры от предыдущей инструкции (шёпот, тон и т.д.)
                         seg_kwargs = dict(default_gen_kwargs)
-                        if hasattr(self, '_pending_instruction_params') and self._pending_instruction_params:
+                        if self._pending_instruction_params:
                             seg_kwargs.update(self._pending_instruction_params)
                             self._log(f"  [{seg_idx+1}/{total_segments}] → параметры инструкции применены (temp={seg_kwargs['temperature']}, top_k={seg_kwargs['top_k']})")
-                            delattr(self, '_pending_instruction_params')
+                            self._pending_instruction_params = None
 
                         wavs, sr_seg = self._generate_segment(
                             text=clean_text,

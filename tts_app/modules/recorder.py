@@ -137,13 +137,70 @@ class AudioRecorder:
             return float(np.max(np.abs(self._audio_buffer)))
         return 0.0
 
+    @staticmethod
+    def _trim_silence(audio: np.ndarray, sample_rate: int, threshold_db: float = -35.0) -> np.ndarray:
+        """Автоматически обрезать тишину в начале и конце аудио.
+        
+        Использует RMS energy для обнаружения начала/конца речи.
+        Это важно для voice cloning — шум и тишина на краях записи
+        ухудшают качество клонирования голоса.
+        """
+        if len(audio) == 0:
+            return audio
+        
+        window_size = int(0.02 * sample_rate)  # 20ms windows
+        hop_size = int(0.01 * sample_rate)     # 10ms hop
+        threshold_linear = 10 ** (threshold_db / 20.0)
+        
+        # Вычисляем RMS energy для каждого окна
+        num_windows = max(1, (len(audio) - window_size) // hop_size + 1)
+        energies = np.zeros(num_windows)
+        for i in range(num_windows):
+            start = i * hop_size
+            end = min(start + window_size, len(audio))
+            segment = audio[start:end]
+            if len(segment) > 0:
+                energies[i] = np.sqrt(np.mean(segment ** 2))
+        
+        # Находим начало и конец речевых участков
+        speech_mask = energies >= threshold_linear
+        if not np.any(speech_mask):
+            return audio  # Нет обнаруженной речи — возвращаем оригинал
+        
+        first_speech_idx = np.argmax(speech_mask)
+        last_speech_idx = len(speech_mask) - 1 - np.argmax(speech_mask[::-1])
+        
+        # Добавляем небольшой отступ (50ms) чтобы не обрезать начало/конец слога
+        margin_samples = int(0.025 * sample_rate)
+        start_sample = max(0, first_speech_idx * hop_size - margin_samples)
+        end_sample = min(len(audio), (last_speech_idx + 1) * hop_size + window_size + margin_samples)
+        
+        trimmed = audio[start_sample:end_sample]
+        if len(trimmed) > 0:
+            return trimmed
+        return audio
+
     def save_audio(
         self,
         audio: np.ndarray,
         sample_rate: int,
         output_path: Optional[str] = None,
+        normalize: bool = False,  # по умолчанию не нормализуем — сохраняем оригинал
+        trim_silence: bool = True,  # по умолчанию обрезаем тишину для voice cloning
     ) -> Tuple[bool, str]:
-        """Сохранить записанное аудио в WAV файл."""
+        """Сохранить записанное аудио в WAV файл.
+        
+        Args:
+            audio: Записанный массив аудио
+            sample_rate: Частота дискретизации
+            output_path: Путь сохранения. Если None — создаётся во временной папке.
+            normalize: Если True, нормализует пик до 1.0 (по умолчанию False,
+                       чтобы сохранить оригинальную динамику записи).
+        """
+        # Обрезаем тишину для улучшения качества voice cloning
+        if trim_silence and len(audio) > 0:
+            audio = self._trim_silence(audio, sample_rate)
+
         try:
             if output_path is None:
                 tmp_dir = os.path.join(
@@ -156,10 +213,10 @@ class AudioRecorder:
                     tmp_dir, f"recording_{timestamp}.wav"
                 )
 
-            # Нормализуем аудио
+            # Нормализуем аудио (с осторожностью: только если пик > 1.0)
             audio = audio.astype(np.float32)
             peak = np.max(np.abs(audio))
-            if peak > 0:
+            if peak > 1.0:
                 audio = audio / peak
 
             os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)

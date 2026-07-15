@@ -87,8 +87,7 @@ class GPUManager:
         with self._lock:
             if torch.cuda.is_available():
                 before = self.get_torch_vram()
-                # Сброс всех тензоров
-                del_tensor_refs = []  # на всякий случай
+                # Сброс кэша и IPC
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
                 torch.cuda.synchronize()

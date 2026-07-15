@@ -16,6 +16,24 @@ class TranscriptionSegment:
         self.text = text
         self.confidence = confidence
 
+    def to_srt(self, index: int) -> str:
+        """Экспорт в формат SRT."""
+        s_start = self._format_time(self.start)
+        s_end = self._format_time(self.end)
+        return f"{index}\n{s_start} --> {s_end}\n{self.text}\n"
+
+    def to_txt(self, index: int) -> str:
+        """Экспорт в TXT с таймкодами."""
+        return f"[{self.start:.2f}s] {self.text}\n"
+
+    @staticmethod
+    def _format_time(seconds: float) -> str:
+        h = int(seconds // 3600)
+        m = int((seconds % 3600) // 60)
+        s = int(seconds % 60)
+        ms = int((seconds * 1000) % 1000)
+        return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
 
 def add_punctuation_from_gaps(segments: List[TranscriptionSegment]) -> List[TranscriptionSegment]:
     """Добавлять пунктуацию на основе пауз между сегментами.
@@ -52,24 +70,6 @@ def add_punctuation_from_gaps(segments: List[TranscriptionSegment]) -> List[Tran
 
     return segments
 
-    def to_srt(self, index: int) -> str:
-        """Экспорт в формат SRT."""
-        s_start = self._format_time(self.start)
-        s_end = self._format_time(self.end)
-        return f"{index}\n{s_start} --> {s_end}\n{self.text}\n"
-
-    def to_txt(self, index: int) -> str:
-        """Экспорт в TXT с таймкодами."""
-        return f"[{self.start:.2f}s] {self.text}\n"
-
-    @staticmethod
-    def _format_time(seconds: float) -> str:
-        h = int(seconds // 3600)
-        m = int((seconds % 3600) // 60)
-        s = int(seconds % 60)
-        ms = int((seconds * 1000) % 1000)
-        return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
-
 
 class WhisperEngine:
     """Обёртка над faster-whisper для транскрибации."""
@@ -88,13 +88,18 @@ class WhisperEngine:
     def _log(self, msg: str):
         if hasattr(self, "_log_callback") and self._log_callback:
             self._log_callback(msg)
-        # Также пишем в файл лога
+        # Также пишем в файл лога с ротацией
         try:
             log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app.log")
-            with open(log_file, "a", encoding="utf-8") as f:
-                from datetime import datetime
-                timestamp = datetime.now().strftime("%H:%M:%S")
-                f.write(f"[{timestamp}] [Whisper] {msg}\n")
+            import logging
+            logger = logging.getLogger(f"whisper_engine_{id(self)}")
+            if not logger.handlers:
+                handler = logging.FileHandler(log_file, encoding="utf-8")
+                formatter = logging.Formatter("%(asctime)s [Whisper] %(message)s", datefmt="%H:%M:%S")
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+                logger.setLevel(logging.INFO)
+            logger.info(msg)
         except Exception:
             pass
 

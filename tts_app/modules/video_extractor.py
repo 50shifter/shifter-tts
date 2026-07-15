@@ -5,15 +5,12 @@ import subprocess
 from pathlib import Path
 from typing import Callable, Optional, Tuple
 
+from tts_app.config import AUDIO_EXTENSIONS as SUPPORTED_AUDIO_EXTENSIONS
+from tts_app.config import VIDEO_EXTENSIONS as SUPPORTED_VIDEO_EXTENSIONS
 
-SUPPORTED_VIDEO_EXTENSIONS = {
-    '.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm',
-    '.m4v', '.mpg', '.mpeg', '.3gp', '.ogv', '.ts',
-}
 
-SUPPORTED_AUDIO_EXTENSIONS = {
-    '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus',
-}
+# Расширения импортируются из config.py
+# SUPPORTED_VIDEO_EXTENSIONS и SUPPORTED_AUDIO_EXTENSIONS
 
 
 class VideoExtractor:
@@ -34,6 +31,8 @@ class VideoExtractor:
     @staticmethod
     def _find_ffmpeg() -> Optional[str]:
         """Найти путь к FFmpeg в системе."""
+        from tts_app.config import _get_ffmpeg_default_paths as _default_paths
+
         # Проверяем PATH
         for name in ['ffmpeg', 'ffmpeg.exe']:
             try:
@@ -49,21 +48,10 @@ class VideoExtractor:
             except Exception:
                 continue
 
-        # Проверяем распространённые пути на Windows
-        if os.name == 'nt':
-            winget_base = (
-                "C:\\Users\\User\\AppData\\Local\\Microsoft\\WinGet\\Packages\\"
-                "Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\"
-                "ffmpeg-8.1.1-full_build\\bin\\ffmpeg.exe"
-            )
-            winget_paths = [
-                r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
-                winget_base,
-                r"C:\Program Files (x86)\ffmpeg\bin\ffmpeg.exe",
-            ]
-            for p in winget_paths:
-                if os.path.isfile(p):
-                    return p
+        # Проверяем распространённые пути из config
+        for p in _default_paths():
+            if os.path.isfile(p):
+                return p
 
         return None
 

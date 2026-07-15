@@ -7,7 +7,12 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 VENV_DIR = os.path.join(PROJECT_DIR, "venv")
 DEFAULT_MODEL_ID = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
 CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
-CACHE_SUBDIR = "models--Qwen--Qwen3-TTS-12Hz-1.7B-Base"
+
+# Пути к модели по умолчанию (синхронизированы с config.py)
+DEFAULT_MODEL_PATHS = [
+    CACHE_DIR + "/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base",
+    CACHE_DIR + "/models--Qwen--Qwen3-TTS-12Hz-0.6B-Base",
+]
 
 
 def show(msg):
@@ -68,17 +73,18 @@ def install_dependencies():
         show("Dependencies installed successfully")
         return True
     else:
-        show("WARNING: Some dependencies may not installed properly")
-        show("Try: " + " ".join([py_exe, "-m", "pip", "install", "-r", req_file] if os.path.exists(req_file) else [py_exe, "-m", "pip", "install"] + packages))
-        return True  # Continue anyway
+        show("ERROR: Failed to install dependencies")
+        show("Try manually: " + " ".join([py_exe, "-m", "pip", "install", "-r", req_file] if os.path.exists(req_file) else [py_exe, "-m", "pip", "install"] + packages))
+        return False
 
 
 def download_model():
     """Download model from HuggingFace"""
-    model_dir = os.path.join(CACHE_DIR, "models--Qwen--Qwen3-TTS-12Hz-1.7B-Base")
-    if os.path.exists(model_dir):
-        show("Model already downloaded locally")
-        return True
+    # Проверяем все стандартные пути
+    for p in DEFAULT_MODEL_PATHS:
+        if os.path.exists(p):
+            show("Model already downloaded locally")
+            return True
         
     show("Downloading model... (this may take while)")
     try:
@@ -93,7 +99,7 @@ def download_model():
     except Exception as e:
         show(f"ERROR: Failed to download model: {e}")
         show("Try: python download_model.py base")
-        return True  # Continue and show error later
+        return False
 
 
 def main():
