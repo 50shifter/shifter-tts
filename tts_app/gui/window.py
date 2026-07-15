@@ -1764,6 +1764,13 @@ class MainWindow(QMainWindow):
             btn[0].setEnabled(True)
             btn[0].setText("🎧 Транскрибировать")
 
+        # Выгружаем Whisper после транскрипции — освобождаем VRAM
+        try:
+            self.whisper_engine.unload_model()
+            self._log("Whisper модель выгружена после транскрипции")
+        except Exception:
+            pass
+
     def _export_transcription(self, ext: str):
         if not self.current_segments:
             QMessageBox.warning(self, "Внимание", "Нет результатов для экспорта.")
@@ -2151,10 +2158,26 @@ class MainWindow(QMainWindow):
                 self.calibrate_voices_list.setItem(row, 2, QTableWidgetItem("X No"))
                 continue
             try:
-                vector = torch.load(path, map_location="cpu", weights_only=False)
-                if isinstance(vector, dict):
-                    xvector = vector.get('xvector', vector.get('voice_embedding', vector.get('embedding', vector)))
-                else:
+                vector = torch.load(path, map_location="cpu", weights_only=True)
+                # Поддержка нового формата (VoiceClonePromptItem) и старого (xvector/voice_embedding)
+                xvector = None
+                if "items" in vector:
+                    item = vector["items"][0]
+                    xvector = item.get("ref_spk_embedding", None)
+                    if xvector is not None and isinstance(xvector, list):
+                        xvector = torch.tensor(xvector, dtype=torch.float32)
+                elif "voice_clone_prompt_item" in vector:
+                    item = vector["voice_clone_prompt_item"]
+                    xvector = item.get("ref_spk_embedding", None)
+                    if xvector is not None and isinstance(xvector, list):
+                        xvector = torch.tensor(xvector, dtype=torch.float32)
+                elif "xvector" in vector:
+                    xvector = vector["xvector"]
+                elif "voice_embedding" in vector:
+                    xvector = vector["voice_embedding"]
+                elif "embedding" in vector:
+                    xvector = vector["embedding"]
+                if xvector is None:
                     xvector = vector
                 if isinstance(xvector, torch.Tensor):
                     xvector = xvector.cpu()
@@ -2191,15 +2214,31 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Error", f"File not found: {path}")
                 return
             try:
-                data = torch.load(path, map_location="cpu", weights_only=False)
-                if isinstance(data, dict):
-                    xvector = data.get('xvector', data.get('voice_embedding', data.get('embedding', data)))
-                else:
-                    xvector = data
+                data = torch.load(path, map_location="cpu", weights_only=True)
+                # Поддержка нового формата (VoiceClonePromptItem) и старого (xvector)
+                xvector = None
+                if "items" in data:
+                    item = data["items"][0]
+                    xvector = item.get("ref_spk_embedding", item)
+                    if isinstance(xvector, list):
+                        xvector = torch.tensor(xvector, dtype=torch.float32)
+                elif "voice_clone_prompt_item" in data:
+                    item = data["voice_clone_prompt_item"]
+                    xvector = item.get("ref_spk_embedding", item)
+                    if isinstance(xvector, list):
+                        xvector = torch.tensor(xvector, dtype=torch.float32)
+                elif "xvector" in data:
+                    xvector = data["xvector"]
+                elif "voice_embedding" in data:
+                    xvector = data["voice_embedding"]
+                elif "embedding" in data:
+                    xvector = data["embedding"]
+                if xvector is None:
+                    raise ValueError(f"No valid xvector found in {path}")
                 if isinstance(xvector, torch.Tensor):
                     vectors.append(xvector.float())
-                else:
-                    vectors.append(xvector)
+                elif isinstance(xvector, list):
+                    vectors.append(torch.tensor(xvector, dtype=torch.float32))
                 weights.append(weight)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Cannot read {path}:\n{e}")
