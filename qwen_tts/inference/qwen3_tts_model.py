@@ -529,15 +529,24 @@ class Qwen3TTSModel:
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
         """Extract speaker embedding and intermediate features from the speaker encoder.
         
+        Uses the original extract_speaker_embedding for the final embedding.
+        Intermediate features are extracted by re-running the encoder forward pass.
+        
         Returns:
             Tuple of (final_embedding, intermediate_l2, intermediate_l3)
             - final_embedding: 1024-dim ECAPA-TDNN output
-            - intermediate_l2: hidden state from SE-Res2Net block 2
-            - intermediate_l3: hidden state from SE-Res2Net block 3
+            - intermediate_l2: hidden state from SE-Res2Net block 2 (512D)
+            - intermediate_l3: hidden state from SE-Res2Net block 3 (512D)
         """
-        from qwen_tts.core.models.modeling_qwen3_tts import mel_spectrogram
+        # Get final embedding using the proven original method
+        final_emb = self.model.extract_speaker_embedding(audio, sr)
         
-        mels = mel_spectrogram(
+        # For intermediate features, we re-run the encoder forward pass
+        # mel_spectrogram returns [B, num_mels, T], encoder forward transposes to [B, T, num_mels]
+        # So we need to transpose BEFORE passing: [B, T, num_mels]
+        from qwen_tts.core.models.modeling_qwen3_tts import mel_spectrogram as _mel_spectrogram
+        
+        mels = _mel_spectrogram(
             torch.from_numpy(audio).unsqueeze(0),
             n_fft=1024,
             num_mels=128,
@@ -546,37 +555,23 @@ class Qwen3TTSModel:
             win_size=1024,
             fmin=0,
             fmax=12000,
-        ).transpose(1, 2)
-        
-        speaker_encoder = self.model.speaker_encoder
+        )
+        # mels shape: [1, 128, T] -> transpose -> [1, T, 128]
+        # Encoder forward: transpose -> [1, 128, T] -> Conv1d expects 128 channels ✓
         hidden = mels.to(self.device).to(self.model.dtype).transpose(1, 2)
         
-        # Extract from each block for intermediate features
         hidden_l2 = None
         hidden_l3 = None
         
+        speaker_encoder = self.model.speaker_encoder
         for idx, layer in enumerate(speaker_encoder.blocks):
             hidden = layer(hidden)
-            if idx == 1:  # After first SE-Res2Net block
-                # Pool and project to fixed dim
+            if idx == 1:
                 pooled = hidden.mean(dim=-1)
                 hidden_l2 = pooled.detach().cpu()
-            if idx == 2:  # After second SE-Res2Net block
+            if idx == 2:
                 pooled = hidden.mean(dim=-1)
                 hidden_l3 = pooled.detach().cpu()
-        
-        # Continue with the rest of the encoder
-        hidden_list = []
-        for layer in speaker_encoder.blocks:
-            hidden = layer(hidden)
-            hidden_list.append(hidden)
-        
-        hidden = torch.cat(hidden_list[1:], dim=1)
-        hidden = speaker_encoder.mfa(hidden)
-        hidden = speaker_encoder.asp(hidden)
-        hidden = speaker_encoder.fc(hidden)
-        
-        final_emb = hidden.squeeze(-1).detach().cpu()
         
         return final_emb, hidden_l2, hidden_l3
 

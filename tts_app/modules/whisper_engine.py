@@ -156,6 +156,8 @@ class WhisperEngine:
             msg = f"Ошибка загрузки Whisper: {e}"
             self._log(msg)
             return False, msg
+        finally:
+            self._loading = False
 
     def transcribe(
         self,
