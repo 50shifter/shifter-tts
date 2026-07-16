@@ -556,8 +556,9 @@ class Qwen3TTSModel:
             fmin=0,
             fmax=12000,
         )
-        # mels shape: [1, 128, T] -> transpose -> [1, T, 128]
-        # Encoder forward: transpose -> [1, 128, T] -> Conv1d expects 128 channels ✓
+        # mel_spectrogram returns [B, num_mels, T]. We need [B, T, num_mels] for encoder.
+        # Encoder forward does .transpose(1,2) -> [B, num_mels, T]
+        # So we transpose BEFORE passing: [B, T, num_mels]
         hidden = mels.to(self.device).to(self.model.dtype).transpose(1, 2)
         
         hidden_l2 = None
