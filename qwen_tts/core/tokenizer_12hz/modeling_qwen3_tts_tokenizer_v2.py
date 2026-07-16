@@ -962,6 +962,7 @@ class Qwen3TTSTokenizerV2Model(Qwen3TTSTokenizerV2PreTrainedModel):
         input_values: torch.Tensor,
         padding_mask: Optional[torch.Tensor] = None,
         return_dict: Optional[bool] = None,
+        return_all_quantizers: bool = False,
     ) -> Union[tuple[torch.Tensor, Optional[torch.Tensor]], Qwen3TTSTokenizerV2EncoderOutput]:
         """
         Encodes the input audio waveform into discrete codes.
@@ -974,12 +975,19 @@ class Qwen3TTSTokenizerV2Model(Qwen3TTSTokenizerV2PreTrainedModel):
                 for *masked*.
             return_dict (`bool`, *optional*):
                 Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+            return_all_quantizers (`bool`, *optional*, defaults to False):
+                If True, return ALL quantizers from the encoder (not just encoder_valid_num_quantizers).
+                This captures the full encoder output for richer voice vector storage.
         """
         return_dict = return_dict if return_dict is not None else self.config.return_dict
 
         encoded_frames = self.encoder.encode(input_values=input_values.unsqueeze(1),
                                              return_dict=True)
-        audio_codes = encoded_frames.audio_codes[:, :self.encoder_valid_num_quantizers]
+        # Get all quantizers if requested, otherwise use the standard limit
+        if return_all_quantizers:
+            audio_codes = encoded_frames.audio_codes
+        else:
+            audio_codes = encoded_frames.audio_codes[:, :self.encoder_valid_num_quantizers]
         audio_codes = [code[..., :-(-mask.sum() // self.encode_downsample_rate)].transpose(0, 1) for code, mask in zip(audio_codes, padding_mask)]
 
         if not return_dict:

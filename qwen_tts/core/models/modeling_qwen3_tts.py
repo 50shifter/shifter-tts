@@ -43,7 +43,10 @@ from transformers.processing_utils import Unpack
 from transformers.utils import can_return_tuple, logging
 from transformers.utils.hub import cached_file
 
-from ...inference.qwen3_tts_tokenizer import Qwen3TTSTokenizer
+try:
+    from ..inference.qwen3_tts_tokenizer import Qwen3TTSTokenizer
+except ImportError:
+    from qwen_tts.inference.qwen3_tts_tokenizer import Qwen3TTSTokenizer
 from .configuration_qwen3_tts import (Qwen3TTSConfig,
                                       Qwen3TTSSpeakerEncoderConfig,
                                       Qwen3TTSTalkerCodePredictorConfig,

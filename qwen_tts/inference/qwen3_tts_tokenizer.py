@@ -26,12 +26,20 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoConfig, AutoFeatureExtractor, AutoModel
 
-from ..core import (
-    Qwen3TTSTokenizerV1Config,
-    Qwen3TTSTokenizerV1Model,
-    Qwen3TTSTokenizerV2Config,
-    Qwen3TTSTokenizerV2Model,
-)
+try:
+    from .core import (
+        Qwen3TTSTokenizerV1Config,
+        Qwen3TTSTokenizerV1Model,
+        Qwen3TTSTokenizerV2Config,
+        Qwen3TTSTokenizerV2Model,
+    )
+except ImportError:
+    from qwen_tts.core import (
+        Qwen3TTSTokenizerV1Config,
+        Qwen3TTSTokenizerV1Model,
+        Qwen3TTSTokenizerV2Config,
+        Qwen3TTSTokenizerV2Model,
+    )
 
 AudioInput = Union[
     str,  # wav path, or base64 string
@@ -210,6 +218,7 @@ class Qwen3TTSTokenizer:
         audios: AudioInput,
         sr: Optional[int] = None,
         return_dict: bool = True,
+        return_all_quantizers: bool = False,
     ):
         """
         Batch-encode audio into discrete codes (and optional conditioning, depending on 25Hz/12Hz).
@@ -225,6 +234,9 @@ class Qwen3TTSTokenizer:
                 Original sampling rate for numpy waveform input.
             return_dict (bool, default=True):
                 Forwarded to model.encode(...). If True, returns ModelOutput.
+            return_all_quantizers (bool, default=False):
+                If True, return ALL quantizers from the encoder (not just encoder_valid_num_quantizers).
+                Captures the full encoder output for richer voice vector storage.
 
         Returns:
             25Hz:
@@ -253,6 +265,7 @@ class Qwen3TTSTokenizer:
                 inputs["input_values"].squeeze(1),
                 inputs["padding_mask"].squeeze(1),
                 return_dict=return_dict,
+                return_all_quantizers=return_all_quantizers,
             )
         return enc
 

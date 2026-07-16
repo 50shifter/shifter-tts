@@ -27,13 +27,56 @@ import soundfile as sf
 import torch
 from transformers import AutoConfig, AutoModel, AutoProcessor
 
-from ..core.models import Qwen3TTSConfig, Qwen3TTSForConditionalGeneration, Qwen3TTSProcessor
+try:
+    from .core.models import Qwen3TTSConfig, Qwen3TTSForConditionalGeneration, Qwen3TTSProcessor
+except ImportError:
+    from qwen_tts.core.models import Qwen3TTSConfig, Qwen3TTSForConditionalGeneration, Qwen3TTSProcessor
 
 AudioLike = Union[
     str,                     # wav path, URL, base64
     np.ndarray,              # waveform (requires sr)
     Tuple[np.ndarray, int],  # (waveform, sr)
 ]
+
+
+# ======================== Вспомогательные функции для компактного сохранения ========================
+
+def _tensor_to_base64(tensor: torch.Tensor) -> str:
+    """Convert a torch.Tensor to a compact base64 string.
+    
+    Stores: dtype (4 bytes) + length (4 bytes) + raw data bytes.
+    This is ~7-8x smaller than .tolist() because it stores raw binary
+    instead of bloated Python objects.
+    """
+    np_arr = tensor.cpu().numpy()
+    raw_bytes = np_arr.tobytes()
+    return base64.b64encode(raw_bytes).decode('ascii')
+
+
+def _base64_to_tensor(b64: str, dtype_str: str, device: Optional[torch.device] = None) -> torch.Tensor:
+    """Reconstruct a torch.Tensor from a base64 string."""
+    if not b64:
+        if device is not None:
+            return torch.tensor([], dtype=getattr(torch, dtype_str), device=device)
+        return torch.tensor([], dtype=getattr(torch, dtype_str))
+    
+    raw_bytes = base64.b64decode(b64)
+    
+    # Map torch dtype names to numpy/dtype equivalents
+    dtype_map = {
+        'float32': np.float32, 'float64': np.float64, 'float16': np.float16,
+        'int8': np.int8, 'int16': np.int16, 'int32': np.int32, 'int64': np.int64,
+        'uint8': np.uint8,
+        'bool': np.bool_,
+    }
+    np_dtype = dtype_map.get(dtype_str, np.float32)
+    np_arr = np.frombuffer(raw_bytes, dtype=np_dtype)
+    
+    tensor = torch.from_numpy(np_arr)
+    tensor = tensor.to(getattr(torch, dtype_str))
+    if device is not None:
+        tensor = tensor.to(device)
+    return tensor
 
 MaybeList = Union[Any, List[Any]]
 
@@ -46,41 +89,119 @@ class VoiceClonePromptItem:
     Fields are aligned with `Qwen3TTSForConditionalGeneration.generate(..., voice_clone_prompt=...)`.
     
     This class supports serialization/deserialization via save_to_file() and load_from_file()
-    so that voice vectors (speaker embedding + speech codes) can be saved to a .pt file
-    and reused later without needing the original reference audio.
+    so that voice vectors (speaker embedding + speech codes + additional acoustic features)
+    can be saved to a .pt file and reused later without needing the original reference audio.
+    
+    Expanded storage includes:
+      - ref_code: speech token codes (all quantizers, not just encoder_valid_num)
+      - ref_spk_embedding: speaker embedding from ECAPA-TDNN
+      - ref_spk_embedding_layer2: speaker embedding from layer 2 of the speaker encoder
+      - ref_spk_embedding_layer3: speaker embedding from layer 3 of the speaker encoder
+      - ref_xvector: additional x-vector representation (from 25Hz tokenizer)
+      - ref_mels: mel-spectrogram of reference audio (from 25Hz tokenizer)
+      - ref_audio_short: short segment of raw audio waveform for additional reference
     """
-    ref_code: Optional[torch.Tensor]                 # (T, Q) or (T,) depending on tokenizer 25Hz/12Hz
-    ref_spk_embedding: torch.Tensor                  # (D,)
-    x_vector_only_mode: bool
-    icl_mode: bool
+    ref_code: Optional[torch.Tensor]                  # (T, Q) or (T,) depending on tokenizer 25Hz/12Hz
+    ref_spk_embedding: torch.Tensor                   # (D,) ECAPA-TDNN final embedding
+    ref_spk_embedding_layer2: Optional[torch.Tensor] = None  # (D2,) intermediate speaker embedding
+    ref_spk_embedding_layer3: Optional[torch.Tensor] = None  # (D3,) another intermediate embedding
+    ref_xvector: Optional[torch.Tensor] = None        # (X,) additional x-vector (25Hz tokenizer)
+    ref_mels: Optional[torch.Tensor] = None           # (T_m, M) mel-spectrogram (25Hz tokenizer)
+    ref_audio_short: Optional[torch.Tensor] = None    # short raw audio segment
+    x_vector_only_mode: bool = False
+    icl_mode: bool = False
     ref_text: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to a serializable dictionary."""
+        """Convert to a serializable dictionary (compact base64 format).
+        
+        Stores ALL available voice data for maximum cloning quality:
+        - ref_code: speech tokens (ALL quantizers)
+        - ref_spk_embedding: ECAPA-TDNN final speaker embedding
+        - ref_spk_embedding_layer2: intermediate speaker embedding (layer 2)
+        - ref_spk_embedding_layer3: intermediate speaker embedding (layer 3)
+        - ref_xvector: additional x-vector (25Hz tokenizer)
+        - ref_mels: mel-spectrogram (25Hz tokenizer)
+        - ref_audio_short: raw audio segment
+        """
+        def _dtype_name(dtype):
+            s = str(dtype)
+            return s.replace("torch.", "") if s.startswith("torch.") else s
+        
         d = {
-            "ref_code": self.ref_code.cpu().numpy().tolist() if self.ref_code is not None else None,
-            "ref_spk_embedding": self.ref_spk_embedding.cpu().numpy().tolist(),
+            "ref_code": _tensor_to_base64(self.ref_code) if self.ref_code is not None else None,
+            "ref_code_dtype": _dtype_name(self.ref_code.dtype) if self.ref_code is not None else None,
+            "ref_spk_embedding": _tensor_to_base64(self.ref_spk_embedding.cpu()),
+            "ref_spk_embedding_dim": int(self.ref_spk_embedding.shape[-1]),
+            "ref_spk_embedding_dtype": _dtype_name(self.ref_spk_embedding.dtype),
             "x_vector_only_mode": self.x_vector_only_mode,
             "icl_mode": self.icl_mode,
             "ref_text": self.ref_text,
         }
         if self.ref_code is not None:
             d["ref_code_shape"] = list(self.ref_code.shape)
-        d["ref_spk_embedding_dim"] = int(self.ref_spk_embedding.shape[-1])
+        
+        # Additional voice features
+        for field in ["ref_spk_embedding_layer2", "ref_spk_embedding_layer3",
+                      "ref_xvector", "ref_mels", "ref_audio_short"]:
+            val = getattr(self, field, None)
+            if val is not None:
+                d[field] = _tensor_to_base64(val.cpu())
+                d[f"{field}_dtype"] = _dtype_name(val.dtype)
+                d[f"{field}_shape"] = list(val.shape)
+        
         return d
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any], device: Optional[torch.device] = None) -> "VoiceClonePromptItem":
-        """Reconstruct a VoiceClonePromptItem from a dictionary."""
+        """Reconstruct a VoiceClonePromptItem from a dictionary.
+        
+        Supports both new base64 format and legacy list format for backward compatibility.
+        Loads all available voice data fields.
+        """
         ref_code = None
-        if d.get("ref_code") is not None:
-            arr = torch.tensor(d["ref_code"], dtype=torch.long, device=device)
+        ref_code_val = d.get("ref_code")
+        if ref_code_val is not None:
+            # Detect format: base64 string (new) vs nested list (old)
+            if isinstance(ref_code_val, str):
+                arr = _base64_to_tensor(ref_code_val, d.get("ref_code_dtype", "int64"), device)
+            else:
+                # Legacy list format
+                arr = torch.tensor(ref_code_val, dtype=torch.long, device=device)
             shape = d.get("ref_code_shape", list(arr.shape))
             ref_code = arr.view(*shape) if len(shape) > 1 else arr
-        spk_emb = torch.tensor(d["ref_spk_embedding"], dtype=torch.float32, device=device)
+        
+        # Speaker embedding: detect format
+        spk_emb_val = d.get("ref_spk_embedding")
+        if isinstance(spk_emb_val, str):
+            spk_emb_dtype = d.get("ref_spk_embedding_dtype", "float32")
+            spk_emb = _base64_to_tensor(spk_emb_val, spk_emb_dtype, device)
+        else:
+            # Legacy list format
+            spk_emb = torch.tensor(spk_emb_val, dtype=torch.float32, device=device)
+        
+        # Load additional voice features
+        additional = {}
+        for field in ["ref_spk_embedding_layer2", "ref_spk_embedding_layer3",
+                      "ref_xvector", "ref_mels", "ref_audio_short"]:
+            val = d.get(field)
+            if val is not None and isinstance(val, str):
+                dtype = d.get(f"{field}_dtype", "float32")
+                additional[field] = _base64_to_tensor(val, dtype, device)
+            elif val is not None:
+                # Legacy format
+                additional[field] = torch.tensor(val, device=device)
+            else:
+                additional[field] = None
+        
         return cls(
             ref_code=ref_code,
             ref_spk_embedding=spk_emb,
+            ref_spk_embedding_layer2=additional.get("ref_spk_embedding_layer2"),
+            ref_spk_embedding_layer3=additional.get("ref_spk_embedding_layer3"),
+            ref_xvector=additional.get("ref_xvector"),
+            ref_mels=additional.get("ref_mels"),
+            ref_audio_short=additional.get("ref_audio_short"),
             x_vector_only_mode=bool(d.get("x_vector_only_mode", False)),
             icl_mode=bool(d.get("icl_mode", False)),
             ref_text=d.get("ref_text"),
@@ -401,6 +522,64 @@ class Qwen3TTSModel:
         )
         return merged
 
+    def _extract_speaker_features(
+        self,
+        audio: np.ndarray,
+        sr: int,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
+        """Extract speaker embedding and intermediate features from the speaker encoder.
+        
+        Returns:
+            Tuple of (final_embedding, intermediate_l2, intermediate_l3)
+            - final_embedding: 1024-dim ECAPA-TDNN output
+            - intermediate_l2: hidden state from SE-Res2Net block 2
+            - intermediate_l3: hidden state from SE-Res2Net block 3
+        """
+        from qwen_tts.core.models.modeling_qwen3_tts import mel_spectrogram
+        
+        mels = mel_spectrogram(
+            torch.from_numpy(audio).unsqueeze(0),
+            n_fft=1024,
+            num_mels=128,
+            sampling_rate=sr,
+            hop_size=256,
+            win_size=1024,
+            fmin=0,
+            fmax=12000,
+        ).transpose(1, 2)
+        
+        speaker_encoder = self.model.speaker_encoder
+        hidden = mels.to(self.device).to(self.model.dtype).transpose(1, 2)
+        
+        # Extract from each block for intermediate features
+        hidden_l2 = None
+        hidden_l3 = None
+        
+        for idx, layer in enumerate(speaker_encoder.blocks):
+            hidden = layer(hidden)
+            if idx == 1:  # After first SE-Res2Net block
+                # Pool and project to fixed dim
+                pooled = hidden.mean(dim=-1)
+                hidden_l2 = pooled.detach().cpu()
+            if idx == 2:  # After second SE-Res2Net block
+                pooled = hidden.mean(dim=-1)
+                hidden_l3 = pooled.detach().cpu()
+        
+        # Continue with the rest of the encoder
+        hidden_list = []
+        for layer in speaker_encoder.blocks:
+            hidden = layer(hidden)
+            hidden_list.append(hidden)
+        
+        hidden = torch.cat(hidden_list[1:], dim=1)
+        hidden = speaker_encoder.mfa(hidden)
+        hidden = speaker_encoder.asp(hidden)
+        hidden = speaker_encoder.fc(hidden)
+        
+        final_emb = hidden.squeeze(-1).detach().cpu()
+        
+        return final_emb, hidden_l2, hidden_l3
+
     # voice clone model
     @torch.inference_mode()
     def create_voice_clone_prompt(
@@ -473,13 +652,20 @@ class Qwen3TTSModel:
             ref_wavs_for_code.append(wav)
             ref_sr_for_code.append(sr)
 
+        # Encoding with ALL quantizers for richer voice representation.
+        # The standard encode() method limits output to encoder_valid_num_quantizers (typically 16),
+        # but the Mimi encoder actually produces 32 quantizers. Using return_all_quantizers=True
+        # captures the full encoder output (~2x more data, significantly better voice cloning quality).
         if len(set(ref_sr_for_code)) == 1:
-            enc = self.model.speech_tokenizer.encode(ref_wavs_for_code, sr=ref_sr_for_code[0])
+            enc = self.model.speech_tokenizer.encode(
+                ref_wavs_for_code, sr=ref_sr_for_code[0], return_all_quantizers=True
+            )
             ref_codes = enc.audio_codes
         else:
             ref_codes = []
             for wav, sr in normalized:
-                ref_codes.append(self.model.speech_tokenizer.encode(wav, sr=sr).audio_codes[0])
+                enc_result = self.model.speech_tokenizer.encode(wav, sr=sr, return_all_quantizers=True)
+                ref_codes.append(enc_result.audio_codes[0])
 
         items: List[VoiceClonePromptItem] = []
         for i, ((wav, sr), code, rtext, xvec_only) in enumerate(zip(normalized, ref_codes, ref_text_list, xvec_list)):
@@ -493,13 +679,27 @@ class Qwen3TTSModel:
                                            orig_sr=int(sr), 
                                            target_sr=self.model.speaker_encoder_sample_rate)
 
-            spk_emb = self.model.extract_speaker_embedding(audio=wav_resample,
-                                                           sr=self.model.speaker_encoder_sample_rate)
+            # Extract full speaker embedding + intermediate representations
+            spk_emb, spk_emb_l2, spk_emb_l3 = self._extract_speaker_features(
+                audio=wav_resample,
+                sr=self.model.speaker_encoder_sample_rate,
+            )
+
+            # Save a short raw audio segment (~1-2 seconds) for additional voice reference
+            audio_len = len(wav_resample)
+            segment_duration = min(2.0, audio_len / self.model.speaker_encoder_sample_rate)
+            segment_samples = int(segment_duration * self.model.speaker_encoder_sample_rate)
+            ref_audio_short = torch.from_numpy(
+                wav_resample[:segment_samples].astype(np.float32)
+            ) if segment_samples > 0 else None
 
             items.append(
                 VoiceClonePromptItem(
                     ref_code=None if xvec_only else code,
                     ref_spk_embedding=spk_emb,
+                    ref_spk_embedding_layer2=spk_emb_l2,
+                    ref_spk_embedding_layer3=spk_emb_l3,
+                    ref_audio_short=ref_audio_short,
                     x_vector_only_mode=bool(xvec_only),
                     icl_mode=bool(not xvec_only),
                     ref_text=rtext,
@@ -547,12 +747,17 @@ class Qwen3TTSModel:
         """
         items = self._ensure_list(prompt_items)
 
-        # Move tensors to CPU for saving
+        # Move tensors to CPU for saving (preserve ALL voice features)
         cpu_items = []
         for item in items:
             cpu_item = VoiceClonePromptItem(
                 ref_code=item.ref_code.cpu() if item.ref_code is not None else None,
                 ref_spk_embedding=item.ref_spk_embedding.cpu(),
+                ref_spk_embedding_layer2=item.ref_spk_embedding_layer2.cpu() if item.ref_spk_embedding_layer2 is not None else None,
+                ref_spk_embedding_layer3=item.ref_spk_embedding_layer3.cpu() if item.ref_spk_embedding_layer3 is not None else None,
+                ref_xvector=item.ref_xvector.cpu() if item.ref_xvector is not None else None,
+                ref_mels=item.ref_mels.cpu() if item.ref_mels is not None else None,
+                ref_audio_short=item.ref_audio_short.cpu() if item.ref_audio_short is not None else None,
                 x_vector_only_mode=item.x_vector_only_mode,
                 icl_mode=item.icl_mode,
                 ref_text=item.ref_text,
@@ -774,10 +979,27 @@ class Qwen3TTSModel:
         for i, wav in enumerate(wavs_all):
             ref_code_list = voice_clone_prompt_dict.get("ref_code", None)
             if ref_code_list is not None and ref_code_list[i] is not None:
-                ref_len = int(ref_code_list[i].shape[0])
+                ref_code = ref_code_list[i]
+                # ref_code: 2D (T, Q) для 12Hz или 1D (T,) для 25Hz
+                # Нам нужно количество таймстепов — первая размерность
+                ref_len = int(ref_code.shape[0])
                 total_len = int(codes_for_decode[i].shape[0])
-                cut = int(ref_len / max(total_len, 1) * wav.shape[0])
-                wavs_out.append(wav[cut:])
+
+                if total_len == 0 or ref_len == 0:
+                    wavs_out.append(wav)
+                    continue
+
+                wav_len = int(wav.shape[0])
+                if ref_len >= total_len:
+                    # Референс длиннее или равен всей генерации
+                    wavs_out.append(np.array([], dtype=np.float32))
+                else:
+                    # Правильная формула: количество образцов референса = ref_len * upsample_rate
+                    # wav_len = total_len * upsample_rate
+                    # cut = ref_len / total_len * wav_len = ref_len * upsample_rate
+                    cut = int(ref_len / total_len * wav_len)
+                    cut = max(0, min(cut, wav_len))
+                    wavs_out.append(wav[cut:])
             else:
                 wavs_out.append(wav)
 
