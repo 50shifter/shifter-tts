@@ -541,9 +541,10 @@ class Qwen3TTSModel:
         # Get final embedding using the proven original method
         final_emb = self.model.extract_speaker_embedding(audio, sr)
         
-        # For intermediate features, we re-run the encoder forward pass
-        # mel_spectrogram returns [B, num_mels, T], encoder forward transposes to [B, T, num_mels]
-        # So we need to transpose BEFORE passing: [B, T, num_mels]
+        # For intermediate features, we re-run the speaker encoder blocks directly.
+        # mel_spectrogram returns [B, num_mels, T]. The encoder blocks (Conv1d layers)
+        # expect input [B, channels, T], which matches the mel spectrogram format directly.
+        # We skip the encoder.forward() transpose(1,2) because we're calling blocks directly.
         from qwen_tts.core.models.modeling_qwen3_tts import mel_spectrogram as _mel_spectrogram
         
         mels = _mel_spectrogram(
@@ -556,10 +557,9 @@ class Qwen3TTSModel:
             fmin=0,
             fmax=12000,
         )
-        # mel_spectrogram returns [B, num_mels, T]. We need [B, T, num_mels] for encoder.
-        # Encoder forward does .transpose(1,2) -> [B, num_mels, T]
-        # So we transpose BEFORE passing: [B, T, num_mels]
-        hidden = mels.to(self.device).to(self.model.dtype).transpose(1, 2)
+        # mel_spectrogram returns [B, num_mels=128, T]. Conv1d layers expect [B, channels, T].
+        # Pass directly without transpose — blocks are called directly (not via encoder.forward()).
+        hidden = mels.to(self.device).to(self.model.dtype)
         
         hidden_l2 = None
         hidden_l3 = None
